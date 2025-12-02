@@ -1,6 +1,6 @@
 # 🔐 Cryptography
 
-[![Docs.rs](https://img.shields.io/badge/docs.rs-documentation-blue.svg)](https://docs.rs/cryptography)  
+[![Docs.rs](https://img.shields.io/badge/docs.rs-documentation-blue.svg)](https://docs.rs/Cryptography)  
 [![License](https://img.shields.io/badge/license-SSPL-blue.svg)](LICENSE)
 
 **Cryptography** is the dedicated cryptographic backend for the **Nebula** ecosystem.  
@@ -34,7 +34,7 @@ Add it directly from GitHub:
 
 ``` toml
 [dependencies]
-cryptography = { git = "https://github.com/enzoblain/cryptography" }
+cryptography = { git = "https://github.com/enzoblain/Cryptography" }
 ``` 
 
 ---
