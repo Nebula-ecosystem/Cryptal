@@ -5,7 +5,7 @@ use crate::primitives::U256;
 use core::ptr::read_unaligned;
 
 #[inline(always)]
-fn compress(block: &[u8; 64], state: &mut [u32; 8]) {
+pub fn compress(block: &[u8; 64], state: &mut [u32; 8]) {
     let mut w = [0u32; 64];
 
     let bp = block.as_ptr();
