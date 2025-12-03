@@ -27,3 +27,6 @@ strip = "none"
 [[bench]]
 name = "benchmark_sha256"
 harness = false
+
+[features]
+"speed" = []

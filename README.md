@@ -16,6 +16,7 @@ Current implementations:
 
 - ⚡ **SHA-256 hashing**  
 - 🔢 **U256** — a 256-bit unsigned integer type  
+- 🚀 **`speed` feature** — prioritize execution speed over binary size *(enables faster builds & optimizations, at the cost of larger binaries)*
 
 Planned additions:
 
@@ -35,7 +36,16 @@ Add it directly from GitHub:
 ``` toml
 [dependencies]
 cryptography = { git = "https://github.com/enzoblain/Cryptography" }
-``` 
+```
+
+### Enabling the `speed` feature
+
+``` toml
+[dependencies]
+cryptography = { git = "https://github.com/enzoblain/Cryptography", features = ["speed"] }
+```
+
+This activates more aggressive Rust compiler optimizations, resulting in a larger binary size as a trade-off.
 
 ---
 
@@ -43,9 +53,9 @@ cryptography = { git = "https://github.com/enzoblain/Cryptography" }
 
 Generate the documentation locally:
 
-``` 
+```bash
 cargo doc --open
-``` 
+```
 
 All functions and types are documented inline for clarity and simplicity.
 

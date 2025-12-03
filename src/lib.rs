@@ -1,4 +1,5 @@
 #![no_std]
+#![recursion_limit = "512"]
 
 pub mod hash;
 pub mod primitives;

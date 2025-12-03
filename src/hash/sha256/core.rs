@@ -1,5 +1,5 @@
 use super::H256_INIT;
-use super::computations::{all_rounds, expand_w};
+use super::computations::all_rounds;
 use crate::primitives::U256;
 
 use core::ptr::read_unaligned;
@@ -18,19 +18,7 @@ pub fn compress(block: &[u8; 64], state: &mut [u32; 8]) {
         }
     }
 
-    expand_w(&mut w);
-
-    let regs = all_rounds(*state, &w);
-
-    let sp = state.as_mut_ptr();
-    let rp = regs.as_ptr();
-    for i in 0..8 {
-        unsafe {
-            let s = sp.add(i).read();
-            let r = rp.add(i).read();
-            sp.add(i).write(s.wrapping_add(r));
-        }
-    }
+    all_rounds(state, &mut w);
 }
 
 pub fn sha256(input: &[u8]) -> U256 {
