@@ -19,41 +19,69 @@ jobs:
       - name: Get crate name
         id: getcrate
         run: |
-          NAME=$(grep '^name' Cargo.toml | head -1 | cut -d'"' -f2)
+          NAME=$(grep -E '^name\s*=' Cargo.toml | head -1 | cut -d'"' -f2)
+          if [ -z "$NAME" ]; then
+            echo "Failed to detect crate name from Cargo.toml" >&2
+            exit 1
+          fi
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: Build default
         run: cargo build --release
-      - name: Save default
+      - name: Save default (only the main crate rlib)
         run: |
+          set -euo pipefail
           mkdir -p lib_default
-          cp target/release/deps/lib*.rlib lib_default/
+          CRATE="${{ steps.getcrate.outputs.name }}"
+          RLIB=$(ls target/release/deps/lib${CRATE}-*.rlib | head -1)
+          if [ -z "${RLIB:-}" ]; then
+            echo "Main crate rlib not found for default build" >&2
+            ls -la target/release/deps || true
+            exit 1
+          fi
+          cp "$RLIB" "lib_default/lib${CRATE}.rlib"
       - uses: actions/upload-artifact@v4
         with:
           name: lib_default
-          path: lib_default/
+          path: lib_default/lib${{ steps.getcrate.outputs.name }}.rlib
 
       - name: Build speed
         run: cargo build --release --features speed
-      - name: Save speed
+      - name: Save speed (only the main crate rlib)
         run: |
+          set -euo pipefail
           mkdir -p lib_speed
-          cp target/release/deps/lib*.rlib lib_speed/
+          CRATE="${{ steps.getcrate.outputs.name }}"
+          RLIB=$(ls target/release/deps/lib${CRATE}-*.rlib | head -1)
+          if [ -z "${RLIB:-}" ]; then
+            echo "Main crate rlib not found for speed build" >&2
+            ls -la target/release/deps || true
+            exit 1
+          fi
+          cp "$RLIB" "lib_speed/lib${CRATE}.rlib"
       - uses: actions/upload-artifact@v4
         with:
           name: lib_speed
-          path: lib_speed/
+          path: lib_speed/lib${{ steps.getcrate.outputs.name }}.rlib
 
-      - name: Build ref
+      - name: Build ref (includes benches to ensure reference code path is compiled)
         run: cargo build --release --benches
-      - name: Save ref
+      - name: Save ref (only the main crate rlib)
         run: |
+          set -euo pipefail
           mkdir -p lib_ref
-          cp target/release/deps/lib*.rlib lib_ref/
+          CRATE="${{ steps.getcrate.outputs.name }}"
+          RLIB=$(ls target/release/deps/lib${CRATE}-*.rlib | head -1)
+          if [ -z "${RLIB:-}" ]; then
+            echo "Main crate rlib not found for ref build" >&2
+            ls -la target/release/deps || true
+            exit 1
+          fi
+          cp "$RLIB" "lib_ref/lib${CRATE}.rlib"
       - uses: actions/upload-artifact@v4
         with:
           name: lib_ref
-          path: lib_ref/
+          path: lib_ref/lib${{ steps.getcrate.outputs.name }}.rlib
 
   test_default:
     runs-on: ubuntu-latest
@@ -61,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Run tests
+      - name: Run tests (default)
         run: cargo test --verbose
 
   test_speed:
@@ -74,7 +102,7 @@ jobs:
         run: cargo test --verbose --features speed
 
   bench_default:
-    runs-on: windows-latest # Switch benchmarks to Windows runners so performance reflects real-world user hardware (no AVX2).
+    runs-on: windows-latest # Use Windows runners to reflect typical user HW and avoid AVX2 skew.
     needs: [build_libs, test_default, test_speed]
     steps:
       - uses: actions/checkout@v4
@@ -91,13 +119,27 @@ jobs:
       - name: Extract mean
         shell: bash
         run: |
-          M=$(jq '.mean.point_estimate' target/criterion/sha256/new/estimates.json)
-          echo $M > mean.txt
+          set -euo pipefail
+          FILE="target/criterion/sha256/new/estimates.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Bench estimates not found: $FILE" >&2
+            find target/criterion -maxdepth 3 -type f -name estimates.json -print || true
+            exit 1
+          fi
+          M=$(jq '.mean.point_estimate' "$FILE")
+          echo "$M" > mean.txt
 
-      - name: Extract size
+      - name: Extract size (exact crate rlib)
         shell: bash
         run: |
-          LIB=$(ls -1t lib/lib*.rlib | head -1)
+          set -euo pipefail
+          CRATE="${{ needs.build_libs.outputs.crate-name }}"
+          LIB="lib/lib${CRATE}.rlib"
+          if [ ! -f "$LIB" ]; then
+            echo "Downloaded rlib not found: $LIB" >&2
+            ls -la lib || true
+            exit 1
+          fi
           stat -c %s "$LIB" > size.txt
 
       - uses: actions/upload-artifact@v4
@@ -108,7 +150,7 @@ jobs:
             size.txt
 
   bench_speed:
-    runs-on: windows-latest # Switch benchmarks to Windows runners so performance reflects real-world user hardware (no AVX2).
+    runs-on: windows-latest
     needs: [build_libs, test_default, test_speed]
     steps:
       - uses: actions/checkout@v4
@@ -125,13 +167,27 @@ jobs:
       - name: Extract mean
         shell: bash
         run: |
-          M=$(jq '.mean.point_estimate' target/criterion/sha256/new/estimates.json)
-          echo $M > mean.txt
+          set -euo pipefail
+          FILE="target/criterion/sha256/new/estimates.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Bench estimates not found: $FILE" >&2
+            find target/criterion -maxdepth 3 -type f -name estimates.json -print || true
+            exit 1
+          fi
+          M=$(jq '.mean.point_estimate' "$FILE")
+          echo "$M" > mean.txt
 
-      - name: Extract size
+      - name: Extract size (exact crate rlib)
         shell: bash
         run: |
-          LIB=$(ls -1t lib/lib*.rlib | head -1)
+          set -euo pipefail
+          CRATE="${{ needs.build_libs.outputs.crate-name }}"
+          LIB="lib/lib${CRATE}.rlib"
+          if [ ! -f "$LIB" ]; then
+            echo "Downloaded rlib not found: $LIB" >&2
+            ls -la lib || true
+            exit 1
+          fi
           stat -c %s "$LIB" > size.txt
 
       - uses: actions/upload-artifact@v4
@@ -142,7 +198,7 @@ jobs:
             size.txt
 
   bench_ref:
-    runs-on: windows-latest # Switch benchmarks to Windows runners so performance reflects real-world user hardware (no AVX2).
+    runs-on: windows-latest
     needs: [build_libs, test_default, test_speed]
     steps:
       - uses: actions/checkout@v4
@@ -159,13 +215,27 @@ jobs:
       - name: Extract mean
         shell: bash
         run: |
-          M=$(jq '.mean.point_estimate' target/criterion/sha256_ref/new/estimates.json)
-          echo $M > mean.txt
+          set -euo pipefail
+          FILE="target/criterion/sha256_ref/new/estimates.json"
+          if [ ! -f "$FILE" ]; then
+            echo "Bench estimates not found: $FILE" >&2
+            find target/criterion -maxdepth 3 -type f -name estimates.json -print || true
+            exit 1
+          fi
+          M=$(jq '.mean.point_estimate' "$FILE")
+          echo "$M" > mean.txt
 
-      - name: Extract size
+      - name: Extract size (exact crate rlib)
         shell: bash
         run: |
-          LIB=$(ls -1t lib/lib*.rlib | head -1)
+          set -euo pipefail
+          CRATE="${{ needs.build_libs.outputs.crate-name }}"
+          LIB="lib/lib${CRATE}.rlib"
+          if [ ! -f "$LIB" ]; then
+            echo "Downloaded rlib not found: $LIB" >&2
+            ls -la lib || true
+            exit 1
+          fi
           stat -c %s "$LIB" > size.txt
 
       - uses: actions/upload-artifact@v4
@@ -183,6 +253,7 @@ jobs:
 
       - name: Print summary
         run: |
+          set -euo pipefail
           M_DEF=$(cat classic256/mean.txt)
           S_DEF=$(cat classic256/size.txt)
           M_SPD=$(cat turbo256/mean.txt)
