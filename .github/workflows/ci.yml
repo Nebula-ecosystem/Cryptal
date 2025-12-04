@@ -159,9 +159,13 @@ jobs:
 
       - name: Measure final sizes + print summary
         run: |
-          M_DEF=$(cat classic256/mean.txt)
-          M_SPD=$(cat turbo256/mean.txt)
-          M_REF=$(cat ref256/mean.txt)
+          M_DEF_RAW=$(cat classic256/mean.txt)
+          M_SPD_RAW=$(cat turbo256/mean.txt)
+          M_REF_RAW=$(cat ref256/mean.txt)
+
+          M_DEF=$(printf "%.2f" "$M_DEF_RAW")
+          M_SPD=$(printf "%.2f" "$M_SPD_RAW")
+          M_REF=$(printf "%.2f" "$M_REF_RAW")
 
           SIZE_DEF=$(du -sb lib_default | cut -f1)
           SIZE_SPD=$(du -sb lib_speed | cut -f1)
