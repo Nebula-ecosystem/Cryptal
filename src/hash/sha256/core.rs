@@ -7,7 +7,7 @@
 //!
 //! SHA-256 processes input messages in 512-bit (64-byte) blocks. The algorithm:
 //!
-//! 1. **Initialization**: Starts with initial hash values ([`H256_INIT`](super::H256_INIT))
+//! 1. **Initialization**: Starts with initial hash values ([`H256_INIT`])
 //! 2. **Padding**: Appends padding bits and the original message length
 //! 3. **Block Processing**: For each 512-bit block, runs the compression function
 //! 4. **Output**: Returns the final hash state as a 256-bit value
