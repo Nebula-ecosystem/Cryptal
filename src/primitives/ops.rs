@@ -3,7 +3,7 @@
 //! Implements XOR/AND plus logical shifts.
 
 use super::U256;
-use core::ops::{Add, BitAnd, BitXor, Shl, Shr, Sub};
+use std::ops::{Add, BitAnd, BitXor, Shl, Shr, Sub};
 
 impl BitXor<U256> for U256 {
     type Output = U256;

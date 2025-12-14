@@ -36,6 +36,37 @@ fn u256_try_from_small_ints_and_back() {
         u128::try_from(e).unwrap(),
         0x0123_4567_89AB_CDEF_0123_4567_89AB_CDEFu128
     );
+    // usize (platform-dependent width)
+    let val: usize = if usize::BITS == 64 {
+        0x0123_4567_89AB_CDEFusize
+    } else {
+        0x89AB_CDEFusize
+    };
+    let f = U256::from(val);
+    assert_eq!(usize::try_from(f).unwrap(), val);
+
+    let mut bad_usize = [0u8; 32];
+    bad_usize[0] = 1;
+    assert!(usize::try_from(U256(bad_usize)).is_err());
+}
+
+#[test]
+fn u256_leading_zeros() {
+    let zero = U256::ZERO;
+    assert_eq!(zero.leading_zeros(), 256);
+
+    let one = U256::from(1u8);
+    assert_eq!(one.leading_zeros(), 255);
+
+    let mut high = [0u8; 32];
+    high[0] = 0x10;
+    let h = U256(high);
+    assert_eq!(h.leading_zeros(), 3);
+
+    let mut mid = [0u8; 32];
+    mid[10] = 0x01;
+    let m = U256(mid);
+    assert_eq!(m.leading_zeros(), 87u32);
 }
 
 #[test]

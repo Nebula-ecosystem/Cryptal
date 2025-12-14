@@ -4,7 +4,7 @@
 //! shift operations plus formatting utilities. Conversion helpers live under
 //! [`conv`], and operator implementations under [`ops`].
 
-use core::fmt::{Display, Formatter, Result};
+use std::fmt::{Display, Formatter, Result};
 
 pub mod conv;
 pub mod ops;
@@ -21,6 +21,22 @@ impl U256 {
         let mut out = [0u8; 32];
         out[31] = 1;
         U256(out)
+    }
+
+    /// Counts the number of leading zero bits in the big-endian representation.
+    pub fn leading_zeros(&self) -> u32 {
+        let mut count = 0u32;
+
+        for &b in self.0.iter() {
+            if b == 0 {
+                count += 8;
+            } else {
+                count += b.leading_zeros();
+                return count;
+            }
+        }
+
+        count
     }
 }
 
