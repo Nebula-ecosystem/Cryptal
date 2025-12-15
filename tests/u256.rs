@@ -150,6 +150,29 @@ fn u256_add_and_sub_carry_borrow() {
 }
 
 #[test]
+fn u256_mul_basic_and_overflow_truncates() {
+    let a = U256::from(2u8);
+    let b = U256::from(3u8);
+    assert_eq!(a * b, U256::from(6u8));
+
+    // (2^256 - 1) * 2 -> wraps to 0xFF..FE after dropping the top carry bit.
+    let doubled = U256::MAX * U256::from(2u8);
+    let mut expected = [0xFFu8; 32];
+    expected[31] = 0xFE;
+    assert_eq!(doubled, U256(expected));
+}
+
+#[test]
+fn u256_mul_cross_limb_carry() {
+    // (1 << 128) * (1 << 64) = 1 << 192
+    let hi128 = U256::from([0u64, 1, 0, 0]);
+    let mid64 = U256::from([0u64, 0, 1, 0]);
+    let product = hi128 * mid64;
+
+    assert_eq!(product, U256::from([1u64, 0, 0, 0]));
+}
+
+#[test]
 fn u256_display_and_asref() {
     let v = U256::from(1u8);
     // as_ref returns a 32-byte slice whose last element is 1

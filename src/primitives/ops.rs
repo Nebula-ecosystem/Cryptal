@@ -3,7 +3,7 @@
 //! Implements XOR/AND plus logical shifts.
 
 use super::U256;
-use std::ops::{Add, BitAnd, BitXor, Shl, Shr, Sub};
+use std::ops::{Add, BitAnd, BitXor, Mul, Shl, Shr, Sub};
 
 impl BitXor<U256> for U256 {
     type Output = U256;
@@ -155,5 +155,49 @@ impl Sub for U256 {
         }
 
         U256(out)
+    }
+}
+
+impl Mul<U256> for U256 {
+    type Output = U256;
+
+    fn mul(self, rhs: U256) -> Self::Output {
+        // Work in little-endian 64-bit limbs to make carry propagation straightforward.
+        let lhs_be: [u64; 4] = self.into();
+        let rhs_be: [u64; 4] = rhs.into();
+
+        let mut lhs = [0u64; 4];
+        let mut rhs = [0u64; 4];
+
+        for i in 0..4 {
+            lhs[i] = lhs_be[3 - i];
+            rhs[i] = rhs_be[3 - i];
+        }
+
+        let mut acc = [0u128; 8];
+
+        for i in 0..4 {
+            for j in 0..4 {
+                acc[i + j] += lhs[i] as u128 * rhs[j] as u128;
+            }
+        }
+
+        for k in 0..7 {
+            let carry = acc[k] >> 64;
+            acc[k] &= 0xFFFF_FFFF_FFFF_FFFF;
+            acc[k + 1] += carry;
+        }
+
+        let mut out_le = [0u64; 4];
+        for i in 0..4 {
+            out_le[i] = acc[i] as u64;
+        }
+
+        let mut out_be = [0u64; 4];
+        for i in 0..4 {
+            out_be[i] = out_le[3 - i];
+        }
+
+        U256::from(out_be)
     }
 }
