@@ -173,6 +173,46 @@ fn u256_mul_cross_limb_carry() {
 }
 
 #[test]
+fn u256_div_basic_cases() {
+    // 9 / 3 = 3
+    let nine = U256::from(9u8);
+    let three = U256::from(3u8);
+    assert_eq!(nine / three, U256::from(3u8));
+
+    // 10 / 3 = 3 (integer division)
+    let ten = U256::from(10u8);
+    assert_eq!(ten / three, U256::from(3u8));
+
+    // dividend < divisor => 0
+    let small = U256::from(5u8);
+    let bigger = U256::from(10u8);
+    assert_eq!(small / bigger, U256::ZERO);
+}
+
+#[test]
+fn u256_div_cross_limb() {
+    // (1 << 16) / (1 << 8) = 1 << 8 = 256
+    let dividend = U256::from(256u16);
+    let divisor = U256::from(1u16);
+    let expected = U256::from(256u16);
+
+    assert_eq!(dividend / divisor, expected);
+}
+
+#[test]
+fn u256_div_by_one_identity() {
+    // Division by 1 should return the same value
+    let wide = U256::from([0xFFFF_FFFF_FFFF_FFFFu64; 4]);
+    assert_eq!(wide / U256::ONE, wide);
+}
+
+#[test]
+#[should_panic(expected = "division by zero")]
+fn u256_div_by_zero_panics() {
+    let _ = U256::from(1u8) / U256::ZERO;
+}
+
+#[test]
 fn u256_display_and_asref() {
     let v = U256::from(1u8);
     // as_ref returns a 32-byte slice whose last element is 1

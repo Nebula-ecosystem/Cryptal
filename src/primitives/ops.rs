@@ -3,7 +3,7 @@
 //! Implements XOR/AND plus logical shifts.
 
 use super::U256;
-use std::ops::{Add, BitAnd, BitXor, Mul, Shl, Shr, Sub};
+use std::ops::{Add, BitAnd, BitXor, Div, Mul, Shl, Shr, Sub};
 
 impl BitXor<U256> for U256 {
     type Output = U256;
@@ -199,5 +199,45 @@ impl Mul<U256> for U256 {
         }
 
         U256::from(out_be)
+    }
+}
+
+impl Div<U256> for U256 {
+    type Output = U256;
+
+    /// Long division using shift-and-subtract (binary long division).
+    ///
+    /// Processes the dividend bit-by-bit from most significant to least significant.
+    /// For each bit, shifts the remainder left by one, brings down the next bit from
+    /// the dividend, and subtracts the divisor if the remainder is large enough.
+    fn div(self, rhs: U256) -> Self::Output {
+        assert!(rhs != U256::ZERO, "division by zero");
+
+        if self < rhs {
+            return U256::ZERO;
+        }
+
+        let mut quotient = [0u8; 32];
+        let mut remainder = U256::ZERO;
+
+        for bit in 0..256 {
+            let byte_idx = bit >> 3;
+            let bit_in_byte = 7 - (bit & 7);
+
+            let incoming = (self.0[byte_idx] >> bit_in_byte) & 1;
+
+            remainder = remainder << U256::from(1u8);
+
+            let mut rem_bytes: [u8; 32] = remainder.into();
+            rem_bytes[31] = (rem_bytes[31] & 0xFE) | incoming;
+            remainder = U256(rem_bytes);
+
+            if remainder >= rhs {
+                remainder = remainder - rhs;
+                quotient[byte_idx] |= 1 << bit_in_byte;
+            }
+        }
+
+        U256(quotient)
     }
 }
