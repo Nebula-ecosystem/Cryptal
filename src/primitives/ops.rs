@@ -1,8 +1,9 @@
-//! Bitwise and shift operations for `U256`.
-//!
-//! Implements XOR/AND plus logical shifts.
+/// Bitwise and shift operations for [`U256`].
+///
+/// This module implémente les opérations bitwise (XOR, AND) et les décalages logiques pour [`U256`].
+/// Utilisé dans les primitives cryptographiques et fonctions de hachage.
+use crate::primitives::u256::U256;
 
-use super::U256;
 use std::ops::{Add, BitAnd, BitXor, Div, Mul, Shl, Shr, Sub};
 
 impl BitXor<U256> for U256 {

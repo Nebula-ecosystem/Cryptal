@@ -1,28 +1,26 @@
-//! SHA-256 computation functions and round operations.
-//!
-//! This module provides low-level helper functions used in the SHA-256 compression function,
-//! including the bitwise operations and the 64-round main loop.
-//!
-//! # Bitwise Operations
-//!
-//! SHA-256 uses several specialized bitwise operations (sigma functions and choice/majority):
-//!
-//! | Function | Purpose | Formula |
-//! |----------|---------|---------|
-//! | `small_sigma0` | Word expansion | ROTR(7) ⊕ ROTR(18) ⊕ SHR(3) |
-//! | `small_sigma1` | Word expansion | ROTR(17) ⊕ ROTR(19) ⊕ SHR(10) |
-//! | `big_sigma0` | State rotation | ROTR(2) ⊕ ROTR(13) ⊕ ROTR(22) |
-//! | `big_sigma1` | State rotation | ROTR(6) ⊕ ROTR(11) ⊕ ROTR(25) |
-//! | `ch` | Choice function | (e ∧ f) ⊕ (¬e ∧ g) |
 //! | `maj` | Majority function | (a ∧ b) ⊕ (a ∧ c) ⊕ (b ∧ c) |
-//!
-//! # References
-//!
-//! - FIPS 180-4: Secure Hash Standard (SHS)
-//! - IEEE 754: Floating-point standard
 
-pub use super::K256;
-
+/// SHA-256 computation functions and round operations.
+///
+/// Ce module fournit les helpers bas-niveau pour la compression SHA-256 : opérations bitwise,
+/// boucle principale 64 tours, etc.
+///
+/// # Opérations bitwise
+///
+/// | Fonction        | Rôle             | Formule                                 |
+/// |-----------------|------------------|-----------------------------------------|
+/// | `small_sigma0`  | Expansion mot    | ROTR(7) ^ ROTR(18) ^ SHR(3)             |
+/// | `small_sigma1`  | Expansion mot    | ROTR(17) ^ ROTR(19) ^ SHR(10)           |
+/// | `big_sigma0`    | Rotation état    | ROTR(2) ^ ROTR(13) ^ ROTR(22)           |
+/// | `big_sigma1`    | Rotation état    | ROTR(6) ^ ROTR(11) ^ ROTR(25)           |
+/// | `ch`            | Choix            | (e & f) ^ (!e & g)                      |
+/// | `maj`           | Majorité         | (a & b) ^ (a & c) ^ (b & c)              |
+///
+/// # Références
+///
+/// - FIPS 180-4: Secure Hash Standard (SHS)
+/// - IEEE 754: Floating-point standard
+use crate::hash::sha256::K256;
 /// Computes the SHA-256 small sigma0 function.
 ///
 /// Used in word schedule expansion (W[t] calculation).

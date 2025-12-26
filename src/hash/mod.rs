@@ -1,8 +1,14 @@
-//! Hash algorithms exposed by the crate.
-//!
-//! Currently includes SHA-256 with a pure-Rust implementation.
-
+/// Hash algorithms exposed by the crate.
+///
+/// Ce module expose les fonctions de hachage cryptographiques implémentées en Rust pur.
+/// Actuellement, seul SHA-256 est fourni.
+///
+/// # Exemple
+///
+/// ```
+/// use cryptography::hash::sha256;
+/// let hash = sha256(b"hello world");
+/// ```
 pub mod sha256;
 
-/// Re-export of the SHA-256 convenience function.
 pub use sha256::core::sha256;

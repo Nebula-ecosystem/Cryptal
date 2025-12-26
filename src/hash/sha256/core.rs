@@ -1,29 +1,28 @@
-//! Core SHA-256 compression and hashing functions.
-//!
-//! This module contains the main hashing logic for SHA-256, including the block compression
-//! function and the high-level `sha256` function that processes arbitrary-length input.
-//!
-//! # Algorithm
-//!
-//! SHA-256 processes input messages in 512-bit (64-byte) blocks. The algorithm:
-//!
-//! 1. **Initialization**: Starts with initial hash values ([`H256_INIT`])
-//! 2. **Padding**: Appends padding bits and the original message length
-//! 3. **Block Processing**: For each 512-bit block, runs the compression function
-//! 4. **Output**: Returns the final hash state as a 256-bit value
-//!
-//! # Performance Considerations
-//!
-//! - Performs unaligned reads for processing input blocks
-//! - Implements a 16-word circular buffer for the message schedule (`W`)
-//!
-//! # Functions
-//!
-//! - [`compress`]: Processes a single 512-bit block
-//! - [`sha256`]: Hashes an arbitrary-length input
+/// Core SHA-256 compression and hashing functions.
+///
+/// Ce module contient la logique principale de SHA-256, dont la fonction de compression de bloc
+/// et la fonction haut-niveau [`sha256`] qui traite des entrées de longueur arbitraire.
+///
+/// # Algorithme
+///
+/// SHA-256 traite les messages en blocs de 512 bits (64 octets) :
+/// 1. Initialisation avec [`H256_INIT`]
+/// 2. Padding et encodage de la longueur
+/// 3. Compression de chaque bloc
+/// 4. Sortie du hash 256 bits
+///
+/// # Performance
+///
+/// - Lecture non alignée des blocs
+/// - Buffer circulaire 16 mots pour le message schedule (`W`)
+///
+/// # Fonctions
+///
+/// - [`compress`] : compresse un bloc 512 bits
+/// - [`sha256`] : hash une entrée de taille arbitraire
+use crate::hash::sha256::H256_INIT;
+use crate::hash::sha256::computations::all_rounds;
 
-use super::H256_INIT;
-use super::computations::all_rounds;
 use crate::primitives::U256;
 
 /// Compresses a single 512-bit (64-byte) block using the SHA-256 compression function.
