@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-SSPL-blue.svg)](LICENSE)
 ![Dev Rust](https://img.shields.io/badge/Developed%20with-Rust%201.92.0-orange)
-[![CI](https://github.com/enzoblain/Cryptogral/actions/workflows/ci.yml/badge.svg)](https://github.com/enzoblain/Cryptal/actions/workflows/ci.yml)
+[![CI](https://github.com/enzoblain/Cryptal/actions/workflows/ci.yml/badge.svg)](https://github.com/enzoblain/Cryptal/actions/workflows/ci.yml)
 
 **Cryptal** is the dedicated cryptographic utility for the ***Nebula*** ecosystem, providing only the essential primitives required by the platform.
 
