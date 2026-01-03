@@ -75,14 +75,6 @@ The crate is designed primarily for research, learning, and internal use within 
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome — especially regarding:
-
-Check [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
-
----
-
 ## 📄 License Philosophy
 
 Cryptal is licensed under the **Server Side Public License (SSPL) v1**.
