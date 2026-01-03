@@ -36,7 +36,7 @@ This crate is not yet published on crates.io. Add it directly from GitHub:
 
 ``` toml
 [dependencies]
-cryptal = { git = "https://github.com/NEbula-ecosystem/Cryptal" }
+cryptal = { git = "https://github.com/Nebula-ecosystem/Cryptal" }
 ```
 
 ---
