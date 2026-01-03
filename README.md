@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-SSPL-blue.svg)](LICENSE)
 ![Dev Rust](https://img.shields.io/badge/Developed%20with-Rust%201.92.0-orange)
-[![CI](https://github.com/enzoblain/Cryptal/actions/workflows/ci.yml/badge.svg)](https://github.com/enzoblain/Cryptal/actions/workflows/ci.yml)
+[![CI](https://github.com/Nebula-ecosystem/Cryptal/actions/workflows/ci.yml/badge.svg)](https://github.com/Nebula-ecosystem/Cryptal/actions/workflows/ci.yml)
 
 **Cryptal** is the dedicated cryptographic utility for the ***Nebula*** ecosystem, providing only the essential primitives required by the platform.
 
@@ -36,7 +36,7 @@ This crate is not yet published on crates.io. Add it directly from GitHub:
 
 ``` toml
 [dependencies]
-cryptal = { git = "https://github.com/enzoblain/Cryptal" }
+cryptal = { git = "https://github.com/NEbula-ecosystem/Cryptal" }
 ```
 
 ---
@@ -108,6 +108,5 @@ remains **open to the community, but protected from fragmentation and exploitati
 
 For questions, discussions, or contributions, feel free to reach out:
 
-- **Discussions**: [Join the discussion](https://github.com/enzoblain/nebula/discussions)
 - **Discord**: enzoblain
 - **Email**: [enzoblain@proton.me](mailto:enzoblain@proton.me)
