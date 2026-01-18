@@ -14,7 +14,7 @@
   - [x] U256 (large integers)
   - [x] U512 (large integers)
   - [x] SHA-256 (integrity, identifiers)
-  - [] SHA-512 (integrity, identifiers)
+  - [x] SHA-512 (integrity, identifiers)
 
 - [ ] **Encryption**
   - [ ] ChaCha20-Poly1305 (confidentiality, integrity)
