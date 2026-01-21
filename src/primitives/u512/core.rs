@@ -21,7 +21,7 @@ use std::fmt::{Display, Formatter, Result};
 /// This type intentionally exposes only minimal functionality required
 /// by the Nebula project, favoring clarity and correctness over completeness.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct U512(pub(crate) [u8; 64]);
+pub struct U512(pub [u8; 64]);
 
 impl U512 {
     /// The value zero.
