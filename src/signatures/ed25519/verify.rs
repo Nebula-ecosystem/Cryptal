@@ -39,8 +39,10 @@ pub fn ed25519_verify(signature: &[u8; 64], message: &[u8], public_key: &[u8; 32
 
     sc_reduce(&mut h);
 
+    let h_red: &[u8; 32] = (&h[..32]).try_into().unwrap();
     let s: &[u8; 32] = (&signature[32..64]).try_into().unwrap();
-    ge_double_scalarmult_vartime(&mut r, &h[32..].try_into().unwrap(), &a, s);
+
+    ge_double_scalarmult_vartime(&mut r, h_red, &a, s);
     ge_tobytes(&mut checker, &r);
 
     consttime_equal(&checker, (&signature[..32]).try_into().unwrap())

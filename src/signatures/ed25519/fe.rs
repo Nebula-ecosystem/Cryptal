@@ -270,103 +270,204 @@ pub fn fe_invert(out: &mut FE, z: &FE) {
     let mut t2 = [0i32; 10];
     let mut t3 = [0i32; 10];
 
+    // fe_sq(t0, z);
     fe_sq(&mut t0, z);
 
-    let t0_copy = t0;
-    fe_sq(&mut t0, &t0_copy);
+    // C: for (i = 1; i < 1; ++i) fe_sq(t0, t0);  => 0 itération
+    // (donc rien ici)
 
-    fe_sq(&mut t1, &t0);
-
-    for _i in 1..2 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // fe_sq(t1, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t1, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, z, &t1_copy);
-    let t0_copy = t0;
-    fe_mul(&mut t0, &t0_copy, &t1);
-    fe_sq(&mut t2, &t0);
-
-    let t2_copy = t2;
-    fe_sq(&mut t2, &t2_copy);
-
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t1_copy, &t2);
-    fe_sq(&mut t2, &t1);
-
-    for _i in 1..5 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // C: for (i = 1; i < 2; ++i) fe_sq(t1, t1);  => 1 itération
+    {
+        let a = t1;
+        fe_sq(&mut t1, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t2, &t1_copy);
-    fe_sq(&mut t2, &t1);
-
-    for _i in 1..10 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // fe_mul(t1, z, t1);
+    {
+        let a = t1;
+        fe_mul(&mut t1, z, &a);
     }
 
-    let t2_copy = t2;
-    fe_mul(&mut t2, &t2_copy, &t1);
-    fe_sq(&mut t3, &t2);
-
-    for _i in 1..20 {
-        let t3_copy = t3;
-        fe_sq(&mut t3, &t3_copy);
+    // fe_mul(t0, t0, t1);
+    {
+        let a = t0;
+        let b = t1;
+        fe_mul(&mut t0, &a, &b);
     }
 
-    let t2_copy = t2;
-    fe_mul(&mut t2, &t3, &t2_copy);
-    let t2_copy = t2;
-    fe_sq(&mut t2, &t2_copy);
-
-    for _i in 1..10 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // fe_sq(t2, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t2, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t2, &t1_copy);
-    fe_sq(&mut t2, &t1);
+    // C: for (i = 1; i < 1; ++i) fe_sq(t2, t2);  => 0 itération
+    // (donc rien ici)
 
-    for _i in 1..50 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // fe_mul(t1, t1, t2);
+    {
+        let a = t1;
+        let b = t2;
+        fe_mul(&mut t1, &a, &b);
     }
 
-    let t2_copy = t2;
-    fe_mul(&mut t2, &t2_copy, &t1);
-    fe_sq(&mut t3, &t2);
-
-    for _i in 1..100 {
-        let t3_copy = t3;
-        fe_sq(&mut t3, &t3_copy);
+    // fe_sq(t2, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t2, &a);
     }
 
-    let t2_copy = t2;
-    fe_mul(&mut t2, &t3, &t2_copy);
-    let t2_copy = t2;
-    fe_sq(&mut t2, &t2_copy);
-
-    for _i in 1..50 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // for (i = 1; i < 5; ++i) fe_sq(t2, t2);
+    for _ in 1..5 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t2, &t1_copy);
-    let t1_copy = t1;
-    fe_sq(&mut t1, &t1_copy);
-
-    for _i in 1..5 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // fe_mul(t1, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t1, &a, &b);
     }
 
-    fe_mul(out, &t1, &t0);
+    // fe_sq(t2, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t2, &a);
+    }
+
+    // for (i = 1; i < 10; ++i) fe_sq(t2, t2);
+    for _ in 1..10 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // fe_mul(t2, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t2, &a, &b);
+    }
+
+    // fe_sq(t3, t2);
+    {
+        let a = t2;
+        fe_sq(&mut t3, &a);
+    }
+
+    // for (i = 1; i < 20; ++i) fe_sq(t3, t3);
+    for _ in 1..20 {
+        let a = t3;
+        fe_sq(&mut t3, &a);
+    }
+
+    // fe_mul(t2, t3, t2);
+    {
+        let a = t3;
+        let b = t2;
+        fe_mul(&mut t2, &a, &b);
+    }
+
+    // fe_sq(t2, t2);
+    {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // for (i = 1; i < 10; ++i) fe_sq(t2, t2);
+    for _ in 1..10 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // fe_mul(t1, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t1, &a, &b);
+    }
+
+    // fe_sq(t2, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t2, &a);
+    }
+
+    // for (i = 1; i < 50; ++i) fe_sq(t2, t2);
+    for _ in 1..50 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // fe_mul(t2, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t2, &a, &b);
+    }
+
+    // fe_sq(t3, t2);
+    {
+        let a = t2;
+        fe_sq(&mut t3, &a);
+    }
+
+    // for (i = 1; i < 100; ++i) fe_sq(t3, t3);
+    for _ in 1..100 {
+        let a = t3;
+        fe_sq(&mut t3, &a);
+    }
+
+    // fe_mul(t2, t3, t2);
+    {
+        let a = t3;
+        let b = t2;
+        fe_mul(&mut t2, &a, &b);
+    }
+
+    // fe_sq(t2, t2);
+    {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // for (i = 1; i < 50; ++i) fe_sq(t2, t2);
+    for _ in 1..50 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // fe_mul(t1, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t1, &a, &b);
+    }
+
+    // fe_sq(t1, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // for (i = 1; i < 5; ++i) fe_sq(t1, t1);
+    for _ in 1..5 {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // fe_mul(out, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(out, &a, &b);
+    }
 }
 
 pub fn fe_isnegative(f: &FE) -> i32 {
@@ -737,96 +838,201 @@ pub fn fe_pow22523(out: &mut FE, z: &FE) {
     let mut t1 = [0i32; 10];
     let mut t2 = [0i32; 10];
 
+    // fe_sq(t0, z);
     fe_sq(&mut t0, z);
 
-    let t0_copy = t0;
-    fe_sq(&mut t0, &t0_copy);
+    // for (i = 1; i < 1; ++i) fe_sq(t0, t0);  // 0 itération -> rien
 
-    fe_sq(&mut t1, &t0);
-
-    for _i in 1..2 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // fe_sq(t1, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t1, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, z, &t1_copy);
-    let t1_copy = t1;
-    fe_mul(&mut t0, &t0_copy, &t1_copy);
-    fe_sq(&mut t0, &t0_copy);
-
-    fe_sq(&mut t0, &t0_copy);
-
-    fe_mul(&mut t0, &t1, &t0_copy);
-    fe_sq(&mut t1, &t0);
-
-    for _i in 1..5 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // for (i = 1; i < 2; ++i) fe_sq(t1, t1);  // 1 itération
+    {
+        let a = t1;
+        fe_sq(&mut t1, &a);
     }
 
-    fe_mul(&mut t0, &t1, &t0_copy);
-    fe_sq(&mut t1, &t0);
-
-    for _i in 1..10 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // fe_mul(t1, z, t1);
+    {
+        let a = t1;
+        fe_mul(&mut t1, z, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t1_copy, &t0_copy);
-    fe_sq(&mut t2, &t1);
-
-    for _i in 1..20 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // fe_mul(t0, t0, t1);
+    {
+        let a = t0;
+        let b = t1;
+        fe_mul(&mut t0, &a, &b);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t2, &t1_copy);
-    let t1_copy = t1;
-    fe_sq(&mut t1, &t1_copy);
-
-    for _i in 1..10 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // fe_sq(t0, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t0, &a);
     }
 
-    fe_mul(&mut t0, &t1, &t0_copy);
-    fe_sq(&mut t1, &t0);
+    // for (i = 1; i < 1; ++i) fe_sq(t0, t0);  // 0 itération -> rien
 
-    for _i in 1..50 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // fe_mul(t0, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(&mut t0, &a, &b);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t1_copy, &t0_copy);
-    fe_sq(&mut t2, &t1);
-
-    for _i in 1..100 {
-        let t2_copy = t2;
-        fe_sq(&mut t2, &t2_copy);
+    // fe_sq(t1, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t1, &a);
     }
 
-    let t1_copy = t1;
-    fe_mul(&mut t1, &t2, &t1_copy);
-    let t1_copy = t1;
-    fe_sq(&mut t1, &t1_copy);
-
-    for _i in 1..50 {
-        let t1_copy = t1;
-        fe_sq(&mut t1, &t1_copy);
+    // for (i = 1; i < 5; ++i) fe_sq(t1, t1);
+    for _ in 1..5 {
+        let a = t1;
+        fe_sq(&mut t1, &a);
     }
 
-    fe_mul(&mut t0, &t1, &t0_copy);
-    fe_sq(&mut t0, &t0_copy);
-
-    for _i in 1..2 {
-        fe_sq(&mut t0, &t0_copy);
+    // fe_mul(t0, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(&mut t0, &a, &b);
     }
 
-    fe_mul(out, &t0, z);
+    // fe_sq(t1, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t1, &a);
+    }
+
+    // for (i = 1; i < 10; ++i) fe_sq(t1, t1);
+    for _ in 1..10 {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // fe_mul(t1, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(&mut t1, &a, &b);
+    }
+
+    // fe_sq(t2, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t2, &a);
+    }
+
+    // for (i = 1; i < 20; ++i) fe_sq(t2, t2);
+    for _ in 1..20 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // fe_mul(t1, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t1, &a, &b);
+    }
+
+    // fe_sq(t1, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // for (i = 1; i < 10; ++i) fe_sq(t1, t1);
+    for _ in 1..10 {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // fe_mul(t0, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(&mut t0, &a, &b);
+    }
+
+    // fe_sq(t1, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t1, &a);
+    }
+
+    // for (i = 1; i < 50; ++i) fe_sq(t1, t1);
+    for _ in 1..50 {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // fe_mul(t1, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(&mut t1, &a, &b);
+    }
+
+    // fe_sq(t2, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t2, &a);
+    }
+
+    // for (i = 1; i < 100; ++i) fe_sq(t2, t2);
+    for _ in 1..100 {
+        let a = t2;
+        fe_sq(&mut t2, &a);
+    }
+
+    // fe_mul(t1, t2, t1);
+    {
+        let a = t2;
+        let b = t1;
+        fe_mul(&mut t1, &a, &b);
+    }
+
+    // fe_sq(t1, t1);
+    {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // for (i = 1; i < 50; ++i) fe_sq(t1, t1);
+    for _ in 1..50 {
+        let a = t1;
+        fe_sq(&mut t1, &a);
+    }
+
+    // fe_mul(t0, t1, t0);
+    {
+        let a = t1;
+        let b = t0;
+        fe_mul(&mut t0, &a, &b);
+    }
+
+    // fe_sq(t0, t0);
+    {
+        let a = t0;
+        fe_sq(&mut t0, &a);
+    }
+
+    // for (i = 1; i < 2; ++i) fe_sq(t0, t0);  // 1 itération
+    {
+        let a = t0;
+        fe_sq(&mut t0, &a);
+    }
+
+    // fe_mul(out, t0, z);
+    {
+        let a = t0;
+        fe_mul(out, &a, z);
+    }
 }
 
 pub fn fe_sq(h: &mut FE, f: &FE) {

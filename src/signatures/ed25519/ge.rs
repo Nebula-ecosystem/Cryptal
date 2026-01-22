@@ -29,7 +29,7 @@ pub struct GeP1P1 {
     pub t: FE,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct GeCached {
     pub yplusx: FE,
     pub yminusx: FE,
@@ -63,30 +63,28 @@ pub fn ge_add(r: &mut GeP1P1, p: &GeP3, q: &GeCached) {
     fe_sub(&mut r.t, &t0, &t);
 }
 
-pub fn slide(r: &mut [i8; 256], a: &[u8; 32]) {
-    let mut i: usize;
-    let mut b: usize;
-    let mut k: usize;
+pub fn slide(r: &mut [i8], a: &[u8; 32]) {
+    assert_eq!(r.len(), 256);
 
-    i = 0;
-    while i < 256 {
+    for i in 0..256 {
         r[i] = ((a[i >> 3] >> (i & 7)) & 1) as i8;
-        i += 1;
     }
 
-    i = 0;
-    while i < 256 {
+    for i in 0..256 {
         if r[i] != 0 {
-            b = 1;
+            let mut b = 1usize;
             while b <= 6 && i + b < 256 {
                 if r[i + b] != 0 {
-                    let v = (r[i + b] as i32) << b;
-                    if (r[i] as i32) + v <= 15 {
-                        r[i] = (r[i] as i32 + v) as i8;
+                    let rb = (r[i + b] as i32) << b;
+                    let ri = r[i] as i32;
+
+                    if ri + rb <= 15 {
+                        r[i] = (ri + rb) as i8;
                         r[i + b] = 0;
-                    } else if (r[i] as i32) - v >= -15 {
-                        r[i] = (r[i] as i32 - v) as i8;
-                        k = i + b;
+                    } else if ri - rb >= -15 {
+                        r[i] = (ri - rb) as i8;
+
+                        let mut k = i + b;
                         while k < 256 {
                             if r[k] == 0 {
                                 r[k] = 1;
@@ -102,64 +100,43 @@ pub fn slide(r: &mut [i8; 256], a: &[u8; 32]) {
                 b += 1;
             }
         }
-        i += 1;
     }
+}
+
+fn print10(label: &str, v: &[i32; 10]) {
+    print!("{label}");
+    for j in 0..10 {
+        if j != 9 {
+            print!("{},", v[j]);
+        } else {
+            print!("{}", v[j]);
+        }
+    }
+    println!();
+}
+
+fn print_slide_range(name: &str, s: &[i8; 256], start: usize, end: usize) {
+    print!("{name}[{start}..{end}]: ");
+    for i in start..end {
+        if i + 1 == end {
+            print!("{}", s[i]);
+        } else {
+            print!("{},", s[i]);
+        }
+    }
+    println!();
 }
 
 pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, b: &[u8; 32]) {
     let mut aslide: [i8; 256] = [0; 256];
     let mut bslide: [i8; 256] = [0; 256];
 
-    let mut ai: [GeCached; 8] = [
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-        GeCached {
-            yplusx: [0; 10],
-            yminusx: [0; 10],
-            z: [0; 10],
-            t2d: [0; 10],
-        },
-    ];
+    let mut ai: [GeCached; 8] = [GeCached {
+        yplusx: [0; 10],
+        yminusx: [0; 10],
+        z: [0; 10],
+        t2d: [0; 10],
+    }; 8];
 
     let mut t = GeP1P1 {
         x: [0; 10],
@@ -183,39 +160,41 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
     slide(&mut aslide, a);
     slide(&mut bslide, b);
 
+    print_slide_range("aslide", &aslide, 0, 32);
+    print_slide_range("aslide", &aslide, 224, 256);
+    print_slide_range("bslide", &bslide, 0, 32);
+    print_slide_range("bslide", &bslide, 224, 256);
+
     ge_p3_to_cached(&mut ai[0], a_point);
+    print10("Ai[0].yplusx: ", &ai[0].yplusx);
+    print10("Ai[0].yminusx: ", &ai[0].yminusx);
+    print10("Ai[0].z: ", &ai[0].z);
+    print10("Ai[0].t2d: ", &ai[0].t2d);
+
     ge_p3_dbl(&mut t, a_point);
+    print10("after ge_p3_dbl t.x: ", &t.x);
+    print10("after ge_p3_dbl t.y: ", &t.y);
+    print10("after ge_p3_dbl t.z: ", &t.z);
+    print10("after ge_p3_dbl t.t: ", &t.t);
+
     ge_p1p1_to_p3(&mut a2, &t);
+    print10("A2.x: ", &a2.x);
+    print10("A2.y: ", &a2.y);
+    print10("A2.z: ", &a2.z);
+    print10("A2.t: ", &a2.t);
 
-    ge_add(&mut t, &a2, &ai[0]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[1], &u);
-
-    ge_add(&mut t, &a2, &ai[1]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[2], &u);
-
-    ge_add(&mut t, &a2, &ai[2]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[3], &u);
-
-    ge_add(&mut t, &a2, &ai[3]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[4], &u);
-
-    ge_add(&mut t, &a2, &ai[4]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[5], &u);
-
-    ge_add(&mut t, &a2, &ai[5]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[6], &u);
-
-    ge_add(&mut t, &a2, &ai[6]);
-    ge_p1p1_to_p3(&mut u, &t);
-    ge_p3_to_cached(&mut ai[7], &u);
+    // Ai[1..7]
+    for j in 1..8 {
+        ge_add(&mut t, &a2, &ai[j - 1]);
+        ge_p1p1_to_p3(&mut u, &t);
+        ge_p3_to_cached(&mut ai[j], &u);
+        print10(&format!("Ai[{j}].yplusx: "), &ai[j].yplusx);
+    }
 
     ge_p2_0(r);
+    print10("r init x: ", &r.x);
+    print10("r init y: ", &r.y);
+    print10("r init z: ", &r.z);
 
     let mut i: i32 = 255;
     while i >= 0 {
@@ -224,33 +203,57 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
         }
         i -= 1;
     }
+    println!("start i={}", i);
 
     while i >= 0 {
+        let asi = aslide[i as usize];
+        let bsi = bslide[i as usize];
+
         ge_p2_dbl(&mut t, r);
 
-        let ai_idx_pos: i8 = aslide[i as usize];
-        if ai_idx_pos > 0 {
-            ge_p1p1_to_p3(&mut u, &t);
-            let idx = (ai_idx_pos / 2) as usize;
-            ge_add(&mut t, &u, &ai[idx]);
-        } else if ai_idx_pos < 0 {
-            ge_p1p1_to_p3(&mut u, &t);
-            let idx = ((-ai_idx_pos) / 2) as usize;
-            ge_sub(&mut t, &u, &ai[idx]);
+        if asi != 0 || bsi != 0 || i >= 252 {
+            println!("[i={}] as={} bs={}", i, asi, bsi);
+            print10("[dbl] t.x: ", &t.x);
         }
 
-        let bi_idx_pos: i8 = bslide[i as usize];
-        if bi_idx_pos > 0 {
+        if asi > 0 {
             ge_p1p1_to_p3(&mut u, &t);
-            let idx = (bi_idx_pos / 2) as usize;
+            let idx = (asi / 2) as usize;
+            ge_add(&mut t, &u, &ai[idx]);
+            if asi != 0 || bsi != 0 || i >= 252 {
+                print10("[+Ai] t.x: ", &t.x);
+            }
+        } else if asi < 0 {
+            ge_p1p1_to_p3(&mut u, &t);
+            let idx = ((-asi) / 2) as usize;
+            ge_sub(&mut t, &u, &ai[idx]);
+            if asi != 0 || bsi != 0 || i >= 252 {
+                print10("[-Ai] t.x: ", &t.x);
+            }
+        }
+
+        if bsi > 0 {
+            ge_p1p1_to_p3(&mut u, &t);
+            let idx = (bsi / 2) as usize;
             ge_madd(&mut t, &u, &BI[idx]);
-        } else if bi_idx_pos < 0 {
+            if asi != 0 || bsi != 0 || i >= 252 {
+                print10("[+Bi] t.x: ", &t.x);
+            }
+        } else if bsi < 0 {
             ge_p1p1_to_p3(&mut u, &t);
-            let idx = ((-bi_idx_pos) / 2) as usize;
+            let idx = ((-bsi) / 2) as usize;
             ge_msub(&mut t, &u, &BI[idx]);
+            if asi != 0 || bsi != 0 || i >= 252 {
+                print10("[-Bi] t.x: ", &t.x);
+            }
         }
 
         ge_p1p1_to_p2(r, &t);
+
+        if asi != 0 || bsi != 0 || i >= 252 {
+            print10("[out] r.x: ", &r.x);
+        }
+
         i -= 1;
     }
 }
@@ -514,14 +517,12 @@ pub fn ge_scalarmult_base(h: &mut GeP3, a: &[u8; 32]) {
     }
 
     let mut carry: i8 = 0;
-
-    for e_i in e.iter_mut().take(63) {
-        *e_i = e_i.wrapping_add(carry);
-        carry = e_i.wrapping_add(8);
-        carry >>= 4;
-        *e_i = e_i.wrapping_sub(carry << 4);
+    for i in 0..63 {
+        e[i] += carry;
+        carry = (e[i] + 8) >> 4;
+        e[i] -= carry << 4;
     }
-    e[63] = e[63].wrapping_add(carry);
+    e[63] += carry;
 
     ge_p3_0(h);
 
@@ -552,17 +553,25 @@ pub fn ge_sub(r: &mut GeP1P1, p: &GeP3, q: &GeCached) {
 
     fe_add(&mut r.x, &p.y, &p.x);
     fe_sub(&mut r.y, &p.y, &p.x);
+
     fe_mul(&mut r.z, &r.x, &q.yminusx);
-    let y = r.y;
-    fe_mul(&mut r.y, &y, &q.yplusx);
+
+    // ✅ snapshot CORRECT de r.y (après fe_sub)
+    let ry = r.y;
+    fe_mul(&mut r.y, &ry, &q.yplusx);
+
     fe_mul(&mut r.t, &q.t2d, &p.t);
     fe_mul(&mut r.x, &p.z, &q.z);
+
     fe_add(&mut t0, &r.x, &r.x);
-    fe_sub(&mut r.x, &r.z, &y);
-    fe_add(&mut r.y, &r.z, &y);
+
+    fe_sub(&mut r.x, &r.z, &r.y);
+    let ry = r.y;
+    fe_add(&mut r.y, &r.z, &ry);
+
     fe_sub(&mut r.z, &t0, &r.t);
-    let t = r.t;
-    fe_add(&mut r.t, &t0, &t);
+    let rt = r.t;
+    fe_add(&mut r.t, &t0, &rt);
 }
 
 pub fn ge_tobytes(s: &mut [u8; 32], h: &GeP2) {

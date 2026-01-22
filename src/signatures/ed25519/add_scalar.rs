@@ -9,7 +9,7 @@ use crate::{
     sc::sc_muladd,
 };
 
-pub fn ed25519_add_ascalar(
+pub fn ed25519_add_scalar(
     public_key: Option<&mut [u8; 32]>,
     private_key: Option<&mut [u8; 64]>,
     scalar: &[u8; 32],
