@@ -103,30 +103,6 @@ pub fn slide(r: &mut [i8], a: &[u8; 32]) {
     }
 }
 
-fn print10(label: &str, v: &[i32; 10]) {
-    print!("{label}");
-    for j in 0..10 {
-        if j != 9 {
-            print!("{},", v[j]);
-        } else {
-            print!("{}", v[j]);
-        }
-    }
-    println!();
-}
-
-fn print_slide_range(name: &str, s: &[i8; 256], start: usize, end: usize) {
-    print!("{name}[{start}..{end}]: ");
-    for i in start..end {
-        if i + 1 == end {
-            print!("{}", s[i]);
-        } else {
-            print!("{},", s[i]);
-        }
-    }
-    println!();
-}
-
 pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, b: &[u8; 32]) {
     let mut aslide: [i8; 256] = [0; 256];
     let mut bslide: [i8; 256] = [0; 256];
@@ -160,41 +136,19 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
     slide(&mut aslide, a);
     slide(&mut bslide, b);
 
-    print_slide_range("aslide", &aslide, 0, 32);
-    print_slide_range("aslide", &aslide, 224, 256);
-    print_slide_range("bslide", &bslide, 0, 32);
-    print_slide_range("bslide", &bslide, 224, 256);
-
     ge_p3_to_cached(&mut ai[0], a_point);
-    print10("Ai[0].yplusx: ", &ai[0].yplusx);
-    print10("Ai[0].yminusx: ", &ai[0].yminusx);
-    print10("Ai[0].z: ", &ai[0].z);
-    print10("Ai[0].t2d: ", &ai[0].t2d);
 
     ge_p3_dbl(&mut t, a_point);
-    print10("after ge_p3_dbl t.x: ", &t.x);
-    print10("after ge_p3_dbl t.y: ", &t.y);
-    print10("after ge_p3_dbl t.z: ", &t.z);
-    print10("after ge_p3_dbl t.t: ", &t.t);
-
     ge_p1p1_to_p3(&mut a2, &t);
-    print10("A2.x: ", &a2.x);
-    print10("A2.y: ", &a2.y);
-    print10("A2.z: ", &a2.z);
-    print10("A2.t: ", &a2.t);
 
     // Ai[1..7]
     for j in 1..8 {
         ge_add(&mut t, &a2, &ai[j - 1]);
         ge_p1p1_to_p3(&mut u, &t);
         ge_p3_to_cached(&mut ai[j], &u);
-        print10(&format!("Ai[{j}].yplusx: "), &ai[j].yplusx);
     }
 
     ge_p2_0(r);
-    print10("r init x: ", &r.x);
-    print10("r init y: ", &r.y);
-    print10("r init z: ", &r.z);
 
     let mut i: i32 = 255;
     while i >= 0 {
@@ -203,7 +157,6 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
         }
         i -= 1;
     }
-    println!("start i={}", i);
 
     while i >= 0 {
         let asi = aslide[i as usize];
@@ -211,49 +164,27 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
 
         ge_p2_dbl(&mut t, r);
 
-        if asi != 0 || bsi != 0 || i >= 252 {
-            println!("[i={}] as={} bs={}", i, asi, bsi);
-            print10("[dbl] t.x: ", &t.x);
-        }
-
         if asi > 0 {
             ge_p1p1_to_p3(&mut u, &t);
             let idx = (asi / 2) as usize;
             ge_add(&mut t, &u, &ai[idx]);
-            if asi != 0 || bsi != 0 || i >= 252 {
-                print10("[+Ai] t.x: ", &t.x);
-            }
         } else if asi < 0 {
             ge_p1p1_to_p3(&mut u, &t);
             let idx = ((-asi) / 2) as usize;
             ge_sub(&mut t, &u, &ai[idx]);
-            if asi != 0 || bsi != 0 || i >= 252 {
-                print10("[-Ai] t.x: ", &t.x);
-            }
         }
 
         if bsi > 0 {
             ge_p1p1_to_p3(&mut u, &t);
             let idx = (bsi / 2) as usize;
             ge_madd(&mut t, &u, &BI[idx]);
-            if asi != 0 || bsi != 0 || i >= 252 {
-                print10("[+Bi] t.x: ", &t.x);
-            }
         } else if bsi < 0 {
             ge_p1p1_to_p3(&mut u, &t);
             let idx = ((-bsi) / 2) as usize;
             ge_msub(&mut t, &u, &BI[idx]);
-            if asi != 0 || bsi != 0 || i >= 252 {
-                print10("[-Bi] t.x: ", &t.x);
-            }
         }
 
         ge_p1p1_to_p2(r, &t);
-
-        if asi != 0 || bsi != 0 || i >= 252 {
-            print10("[out] r.x: ", &r.x);
-        }
-
         i -= 1;
     }
 }
@@ -556,7 +487,6 @@ pub fn ge_sub(r: &mut GeP1P1, p: &GeP3, q: &GeCached) {
 
     fe_mul(&mut r.z, &r.x, &q.yminusx);
 
-    // ✅ snapshot CORRECT de r.y (après fe_sub)
     let ry = r.y;
     fe_mul(&mut r.y, &ry, &q.yplusx);
 
