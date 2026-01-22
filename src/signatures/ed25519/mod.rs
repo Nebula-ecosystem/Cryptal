@@ -1,5 +1,5 @@
 pub mod add_scalar;
-pub mod fe;
+pub mod field;
 pub mod ge;
 pub mod key_exchange;
 pub mod keypair;

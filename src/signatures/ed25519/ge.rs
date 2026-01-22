@@ -1,66 +1,110 @@
-use super::{
-    fe::{
-        FE, fe_0, fe_1, fe_add, fe_cmov, fe_copy, fe_frombytes, fe_invert, fe_isnegative,
-        fe_isnonzero, fe_mul, fe_neg, fe_pow22523, fe_sq, fe_sq2, fe_sub, fe_tobytes,
-    },
-    precomp_data::{BASE, BI},
-};
+use super::field::FieldElement;
+use super::precomp_data::{BASE, BI};
 
-#[derive(Default)]
 pub struct GeP2 {
-    pub x: FE,
-    pub y: FE,
-    pub z: FE,
+    pub(crate) x: FieldElement,
+    pub(crate) y: FieldElement,
+    pub(crate) z: FieldElement,
 }
 
-#[derive(Default)]
 pub struct GeP3 {
-    pub x: FE,
-    pub y: FE,
-    pub z: FE,
-    pub t: FE,
+    pub(crate) x: FieldElement,
+    pub(crate) y: FieldElement,
+    pub(crate) z: FieldElement,
+    pub(crate) t: FieldElement,
 }
 
-#[derive(Default)]
 pub struct GeP1P1 {
-    pub x: FE,
-    pub y: FE,
-    pub z: FE,
-    pub t: FE,
+    pub(crate) x: FieldElement,
+    pub(crate) y: FieldElement,
+    pub(crate) z: FieldElement,
+    pub(crate) t: FieldElement,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct GeCached {
-    pub yplusx: FE,
-    pub yminusx: FE,
-    pub z: FE,
-    pub t2d: FE,
+    pub(crate) yplusx: FieldElement,
+    pub(crate) yminusx: FieldElement,
+    pub(crate) z: FieldElement,
+    pub(crate) t2d: FieldElement,
 }
 
-#[derive(Default)]
 pub struct GePrecomp {
-    pub yplusx: FE,
-    pub yminusx: FE,
-    pub xy2d: FE,
+    pub(crate) yplusx: FieldElement,
+    pub(crate) yminusx: FieldElement,
+    pub(crate) xy2d: FieldElement,
+}
+
+impl Default for GeP2 {
+    fn default() -> Self {
+        Self {
+            x: FieldElement::ZERO,
+            y: FieldElement::ZERO,
+            z: FieldElement::ZERO,
+        }
+    }
+}
+
+impl Default for GeP3 {
+    fn default() -> Self {
+        Self {
+            x: FieldElement::ZERO,
+            y: FieldElement::ZERO,
+            z: FieldElement::ZERO,
+            t: FieldElement::ZERO,
+        }
+    }
+}
+
+impl Default for GeP1P1 {
+    fn default() -> Self {
+        Self {
+            x: FieldElement::ZERO,
+            y: FieldElement::ZERO,
+            z: FieldElement::ZERO,
+            t: FieldElement::ZERO,
+        }
+    }
+}
+
+impl Default for GeCached {
+    fn default() -> Self {
+        Self {
+            yplusx: FieldElement::ZERO,
+            yminusx: FieldElement::ZERO,
+            z: FieldElement::ZERO,
+            t2d: FieldElement::ZERO,
+        }
+    }
+}
+
+impl Default for GePrecomp {
+    fn default() -> Self {
+        Self {
+            yplusx: FieldElement::ZERO,
+            yminusx: FieldElement::ZERO,
+            xy2d: FieldElement::ZERO,
+        }
+    }
 }
 
 pub fn ge_add(r: &mut GeP1P1, p: &GeP3, q: &GeCached) {
-    let mut t0: FE = [0i32; 10];
+    r.x = p.y + p.x;
+    r.y = p.y - p.x;
 
-    fe_add(&mut r.x, &p.y, &p.x);
-    fe_sub(&mut r.y, &p.y, &p.x);
-    fe_mul(&mut r.z, &r.x, &q.yplusx);
-    let y = r.y;
-    fe_mul(&mut r.y, &y, &q.yminusx);
-    fe_mul(&mut r.t, &q.t2d, &p.t);
-    fe_mul(&mut r.x, &p.z, &q.z);
-    fe_add(&mut t0, &r.x, &r.x);
-    fe_sub(&mut r.x, &r.z, &r.y);
-    let y = r.y;
-    fe_add(&mut r.y, &r.z, &y);
-    fe_add(&mut r.z, &t0, &r.t);
-    let t = r.t;
-    fe_sub(&mut r.t, &t0, &t);
+    r.z = r.x * q.yplusx;
+    r.y = r.y * q.yminusx;
+
+    r.t = q.t2d * p.t;
+    r.x = p.z * q.z;
+
+    let t0 = r.x + r.x;
+
+    r.x = r.z - r.y;
+    r.y = r.z + r.y;
+
+    r.z = t0 + r.t;
+    r.t = t0 - r.t;
 }
 
 pub fn slide(r: &mut [i8], a: &[u8; 32]) {
@@ -108,29 +152,31 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
     let mut bslide: [i8; 256] = [0; 256];
 
     let mut ai: [GeCached; 8] = [GeCached {
-        yplusx: [0; 10],
-        yminusx: [0; 10],
-        z: [0; 10],
-        t2d: [0; 10],
+        yplusx: FieldElement::ZERO,
+        yminusx: FieldElement::ZERO,
+        z: FieldElement::ZERO,
+        t2d: FieldElement::ZERO,
     }; 8];
 
     let mut t = GeP1P1 {
-        x: [0; 10],
-        y: [0; 10],
-        z: [0; 10],
-        t: [0; 10],
+        x: FieldElement::ZERO,
+        y: FieldElement::ZERO,
+        z: FieldElement::ZERO,
+        t: FieldElement::ZERO,
     };
+
     let mut u = GeP3 {
-        x: [0; 10],
-        y: [0; 10],
-        z: [0; 10],
-        t: [0; 10],
+        x: FieldElement::ZERO,
+        y: FieldElement::ZERO,
+        z: FieldElement::ZERO,
+        t: FieldElement::ZERO,
     };
+
     let mut a2 = GeP3 {
-        x: [0; 10],
-        y: [0; 10],
-        z: [0; 10],
-        t: [0; 10],
+        x: FieldElement::ZERO,
+        y: FieldElement::ZERO,
+        z: FieldElement::ZERO,
+        t: FieldElement::ZERO,
     };
 
     slide(&mut aslide, a);
@@ -189,187 +235,170 @@ pub fn ge_double_scalarmult_vartime(r: &mut GeP2, a: &[u8; 32], a_point: &GeP3, 
     }
 }
 
-pub const D: FE = [
+pub(crate) const D: FieldElement = FieldElement([
     -10913610, 13857413, -15372611, 6949391, 114729, -8787816, -6275908, -3247719, -18696448,
     -12055116,
-];
+]);
 
-pub const SQRTM1: FE = [
+pub(crate) const SQRTM1: FieldElement = FieldElement([
     -32595792, -7943725, 9377950, 3500415, 12389472, -272473, -25146209, -2005654, 326686, 11406482,
-];
+]);
 
 pub fn ge_frombytes_negate_vartime(h: &mut GeP3, s: &[u8; 32]) -> i32 {
-    let mut u: FE = [0; 10];
-    let mut v: FE = [0; 10];
-    let mut v3: FE = [0; 10];
-    let mut vxx: FE = [0; 10];
-    let mut check: FE = [0; 10];
+    h.y = FieldElement::from_bytes(s);
+    h.z = FieldElement::ONE;
 
-    fe_frombytes(&mut h.y, s);
-    fe_1(&mut h.z);
-    fe_sq(&mut u, &h.y);
-    fe_mul(&mut v, &u, &D);
-    let uu = u;
-    fe_sub(&mut u, &uu, &h.z);
-    let vv = v;
-    fe_add(&mut v, &vv, &h.z);
-    fe_sq(&mut v3, &v);
-    let v33 = v3;
-    fe_mul(&mut v3, &v33, &v);
-    fe_sq(&mut h.x, &v3);
-    let x = h.x;
-    fe_mul(&mut h.x, &x, &v);
-    let x = h.x;
-    fe_mul(&mut h.x, &x, &u);
-    let x = h.x;
-    fe_pow22523(&mut h.x, &x);
-    let x = h.x;
-    fe_mul(&mut h.x, &x, &v3);
-    let x = h.x;
-    fe_mul(&mut h.x, &x, &u);
-    fe_sq(&mut vxx, &h.x);
-    let vxxx = vxx;
-    fe_mul(&mut vxx, &vxxx, &v);
-    fe_sub(&mut check, &vxx, &u);
+    let mut u = h.y.sq();
+    let mut v = u * D;
+    u = u - h.z;
+    v = v + h.z;
 
-    if fe_isnonzero(&check) == 1 {
-        fe_add(&mut check, &vxx, &u);
-        if fe_isnonzero(&check) == 1 {
+    let v3 = v.sq();
+    let v3 = v3 * v;
+
+    h.x = v3.sq();
+    h.x = h.x * v;
+    h.x = h.x * u;
+    h.x = h.x.pow22523();
+    h.x = h.x * v3;
+    h.x = h.x * u;
+
+    let mut vxx = h.x.sq();
+    vxx = vxx * v;
+    let mut check = vxx - u;
+
+    if check.is_non_zero() == 1 {
+        check = vxx + u;
+        if check.is_non_zero() == 1 {
             return -1;
         }
-        let x = h.x;
-        fe_mul(&mut h.x, &x, &SQRTM1);
+        h.x = h.x * SQRTM1;
     }
 
-    let sign = (s[31] >> 7) != 0;
-    if fe_isnegative(&h.x) == sign as i32 {
-        let hx = h.x;
-        fe_neg(&mut h.x, &hx);
+    let sign = (s[31] >> 7) as i32;
+    if h.x.is_negative() == sign {
+        h.x = -h.x;
     }
 
-    fe_mul(&mut h.t, &h.x, &h.y);
+    h.t = h.x * h.y;
     0
 }
 
 pub fn ge_madd(r: &mut GeP1P1, p: &GeP3, q: &GePrecomp) {
-    let mut t0: FE = [0; 10];
+    r.x = p.y + p.x;
+    r.y = p.y - p.x;
 
-    fe_add(&mut r.x, &p.y, &p.x);
-    fe_sub(&mut r.y, &p.y, &p.x);
-    fe_mul(&mut r.z, &r.x, &q.yplusx);
-    let y = r.y;
-    fe_mul(&mut r.y, &y, &q.yminusx);
-    fe_mul(&mut r.t, &q.xy2d, &p.t);
-    fe_add(&mut t0, &p.z, &p.z);
-    fe_sub(&mut r.x, &r.z, &r.y);
-    let y = r.y;
-    fe_add(&mut r.y, &r.z, &y);
-    fe_add(&mut r.z, &t0, &r.t);
-    let t = r.t;
-    fe_sub(&mut r.t, &t0, &t);
+    r.z = r.x * q.yplusx;
+    r.y = r.y * q.yminusx;
+
+    r.t = q.xy2d * p.t;
+
+    let t0 = p.z + p.z;
+
+    r.x = r.z - r.y;
+    r.y = r.z + r.y;
+
+    r.z = t0 + r.t;
+    r.t = t0 - r.t;
 }
 
 pub fn ge_msub(r: &mut GeP1P1, p: &GeP3, q: &GePrecomp) {
-    let mut t0: FE = [0; 10];
+    r.x = p.y + p.x;
+    r.y = p.y - p.x;
 
-    fe_add(&mut r.x, &p.y, &p.x);
-    fe_sub(&mut r.y, &p.y, &p.x);
-    fe_mul(&mut r.z, &r.x, &q.yminusx);
-    let y = r.y;
-    fe_mul(&mut r.y, &y, &q.yplusx);
-    fe_mul(&mut r.t, &q.xy2d, &p.t);
-    fe_add(&mut t0, &p.z, &p.z);
-    fe_sub(&mut r.x, &r.z, &r.y);
-    let y = r.y;
-    fe_add(&mut r.y, &r.z, &y);
-    fe_sub(&mut r.z, &t0, &r.t);
-    let t = r.t;
-    fe_add(&mut r.t, &t0, &t);
+    r.z = r.x * q.yminusx;
+    r.y = r.y * q.yplusx;
+
+    r.t = q.xy2d * p.t;
+
+    let t0 = p.z + p.z;
+
+    r.x = r.z - r.y;
+    r.y = r.z + r.y;
+
+    r.z = t0 - r.t;
+    r.t = t0 + r.t;
 }
 
 pub fn ge_p1p1_to_p2(r: &mut GeP2, p: &GeP1P1) {
-    fe_mul(&mut r.x, &p.x, &p.t);
-    fe_mul(&mut r.y, &p.y, &p.z);
-    fe_mul(&mut r.z, &p.z, &p.t);
+    r.x = p.x * p.t;
+    r.y = p.y * p.z;
+    r.z = p.z * p.t;
 }
 
 pub fn ge_p1p1_to_p3(r: &mut GeP3, p: &GeP1P1) {
-    fe_mul(&mut r.x, &p.x, &p.t);
-    fe_mul(&mut r.y, &p.y, &p.z);
-    fe_mul(&mut r.z, &p.z, &p.t);
-    fe_mul(&mut r.t, &p.x, &p.y);
+    r.x = p.x * p.t;
+    r.y = p.y * p.z;
+    r.z = p.z * p.t;
+    r.t = p.x * p.y;
 }
 
 pub fn ge_p2_0(h: &mut GeP2) {
-    fe_0(&mut h.x);
-    fe_1(&mut h.y);
-    fe_1(&mut h.z);
+    h.x = FieldElement::ZERO;
+    h.y = FieldElement::ONE;
+    h.z = FieldElement::ONE;
 }
 
 pub fn ge_p2_dbl(r: &mut GeP1P1, p: &GeP2) {
-    let mut t0: FE = [0; 10];
+    r.x = p.x.sq();
+    r.z = p.y.sq();
+    r.t = p.z.sq2();
 
-    fe_sq(&mut r.x, &p.x);
-    fe_sq(&mut r.z, &p.y);
-    fe_sq2(&mut r.t, &p.z);
-    fe_add(&mut r.y, &p.x, &p.y);
-    fe_sq(&mut t0, &r.y);
-    fe_add(&mut r.y, &r.z, &r.x);
-    let z = r.z;
-    fe_sub(&mut r.z, &z, &r.x);
-    fe_sub(&mut r.x, &t0, &r.y);
-    let t = r.t;
-    fe_sub(&mut r.t, &t, &r.z);
+    r.y = p.x + p.y;
+    let t0 = r.y.sq();
+
+    r.y = r.z + r.x;
+    r.z = r.z - r.x;
+
+    r.x = t0 - r.y;
+    r.t = r.t - r.z;
 }
 
 pub fn ge_p3_0(h: &mut GeP3) {
-    fe_0(&mut h.x);
-    fe_1(&mut h.y);
-    fe_1(&mut h.z);
-    fe_0(&mut h.t);
+    h.x = FieldElement::ZERO;
+    h.y = FieldElement::ONE;
+    h.z = FieldElement::ONE;
+    h.t = FieldElement::ZERO;
 }
 
 pub fn ge_p3_dbl(r: &mut GeP1P1, p: &GeP3) {
     let mut q = GeP2 {
-        x: [0; 10],
-        y: [0; 10],
-        z: [0; 10],
+        x: FieldElement::ZERO,
+        y: FieldElement::ZERO,
+        z: FieldElement::ZERO,
     };
 
     ge_p3_to_p2(&mut q, p);
     ge_p2_dbl(r, &q);
 }
 
-pub const D2: FE = [
+pub(crate) const D2: FieldElement = FieldElement([
     -21827239, -5839606, -30745221, 13898782, 229458, 15978800, -12551817, -6495438, 29715968,
     9444199,
-];
+]);
 
 pub fn ge_p3_to_cached(r: &mut GeCached, p: &GeP3) {
-    fe_add(&mut r.yplusx, &p.y, &p.x);
-    fe_sub(&mut r.yminusx, &p.y, &p.x);
-    fe_copy(&mut r.z, &p.z);
-    fe_mul(&mut r.t2d, &p.t, &D2);
+    r.yplusx = p.y + p.x;
+    r.yminusx = p.y - p.x;
+    r.z = p.z;
+    r.t2d = p.t * D2;
 }
 
 pub fn ge_p3_to_p2(r: &mut GeP2, p: &GeP3) {
-    fe_copy(&mut r.x, &p.x);
-    fe_copy(&mut r.y, &p.y);
-    fe_copy(&mut r.z, &p.z);
+    r.x = p.x;
+    r.y = p.y;
+    r.z = p.z;
 }
 
-pub fn ge_p3_tobytes(s: &mut [u8; 32], h: &GeP3) {
-    let mut recip: FE = [0; 10];
-    let mut x: FE = [0; 10];
-    let mut y: FE = [0; 10];
+pub fn ge_p3_tobytes(output: &mut [u8; 32], h: &GeP3) {
+    let recip = h.z.invert();
+    let x = h.x * recip;
+    let y = h.y * recip;
 
-    fe_invert(&mut recip, &h.z);
-    fe_mul(&mut x, &h.x, &recip);
-    fe_mul(&mut y, &h.y, &recip);
-    fe_tobytes(s, &y);
+    *output = y.to_bytes();
 
-    let bit = if fe_isnegative(&x) == 1 { 1u8 } else { 0u8 };
-    s[31] ^= bit << 7;
+    let sign_bit = x.is_negative() as u8;
+    output[31] ^= sign_bit << 7;
 }
 
 pub fn equal(b: i8, c: i8) -> u8 {
@@ -389,24 +418,24 @@ pub fn negative(b: i8) -> u8 {
 }
 
 pub fn cmov(t: &mut GePrecomp, u: &GePrecomp, b: u8) {
-    fe_cmov(&mut t.yplusx, &u.yplusx, b as u32);
-    fe_cmov(&mut t.yminusx, &u.yminusx, b as u32);
-    fe_cmov(&mut t.xy2d, &u.xy2d, b as u32);
+    t.yplusx.mov(&u.yplusx, b as u32);
+    t.yminusx.mov(&u.yminusx, b as u32);
+    t.xy2d.mov(&u.xy2d, b as u32);
 }
 
 pub fn select(t: &mut GePrecomp, pos: usize, b: i8) {
     let mut minust = GePrecomp {
-        yplusx: [0; 10],
-        yminusx: [0; 10],
-        xy2d: [0; 10],
+        yplusx: FieldElement::ZERO,
+        yminusx: FieldElement::ZERO,
+        xy2d: FieldElement::ZERO,
     };
 
     let bnegative = negative(b);
     let babs = (b as i16 - (((-(bnegative as i16)) & (b as i16)) << 1)) as i8;
 
-    fe_1(&mut t.yplusx);
-    fe_1(&mut t.yminusx);
-    fe_0(&mut t.xy2d);
+    t.yplusx = FieldElement::ONE;
+    t.yminusx = FieldElement::ONE;
+    t.xy2d = FieldElement::ZERO;
 
     cmov(t, &BASE[pos][0], equal(babs, 1));
     cmov(t, &BASE[pos][1], equal(babs, 2));
@@ -417,29 +446,33 @@ pub fn select(t: &mut GePrecomp, pos: usize, b: i8) {
     cmov(t, &BASE[pos][6], equal(babs, 7));
     cmov(t, &BASE[pos][7], equal(babs, 8));
 
-    fe_copy(&mut minust.yplusx, &t.yminusx);
-    fe_copy(&mut minust.yminusx, &t.yplusx);
-    fe_neg(&mut minust.xy2d, &t.xy2d);
+    minust.yplusx = t.yminusx;
+    minust.yminusx = t.yplusx;
+    minust.xy2d = -t.xy2d;
+
     cmov(t, &minust, bnegative);
 }
 
 pub fn ge_scalarmult_base(h: &mut GeP3, a: &[u8; 32]) {
     let mut e = [0i8; 64];
+
     let mut r = GeP1P1 {
-        x: [0; 10],
-        y: [0; 10],
-        z: [0; 10],
-        t: [0; 10],
+        x: FieldElement::ZERO,
+        y: FieldElement::ZERO,
+        z: FieldElement::ZERO,
+        t: FieldElement::ZERO,
     };
+
     let mut s = GeP2 {
-        x: [0; 10],
-        y: [0; 10],
-        z: [0; 10],
+        x: FieldElement::ZERO,
+        y: FieldElement::ZERO,
+        z: FieldElement::ZERO,
     };
+
     let mut t = GePrecomp {
-        yplusx: [0; 10],
-        yminusx: [0; 10],
-        xy2d: [0; 10],
+        yplusx: FieldElement::ZERO,
+        yminusx: FieldElement::ZERO,
+        xy2d: FieldElement::ZERO,
     };
 
     for i in 0..32 {
@@ -480,40 +513,31 @@ pub fn ge_scalarmult_base(h: &mut GeP3, a: &[u8; 32]) {
 }
 
 pub fn ge_sub(r: &mut GeP1P1, p: &GeP3, q: &GeCached) {
-    let mut t0: FE = [0; 10];
+    r.x = p.y + p.x;
+    r.y = p.y - p.x;
 
-    fe_add(&mut r.x, &p.y, &p.x);
-    fe_sub(&mut r.y, &p.y, &p.x);
+    r.z = r.x * q.yminusx;
+    r.y = r.y * q.yplusx;
 
-    fe_mul(&mut r.z, &r.x, &q.yminusx);
+    r.t = q.t2d * p.t;
+    r.x = p.z * q.z;
 
-    let ry = r.y;
-    fe_mul(&mut r.y, &ry, &q.yplusx);
+    let t0 = r.x + r.x;
 
-    fe_mul(&mut r.t, &q.t2d, &p.t);
-    fe_mul(&mut r.x, &p.z, &q.z);
+    r.x = r.z - r.y;
+    r.y = r.z + r.y;
 
-    fe_add(&mut t0, &r.x, &r.x);
-
-    fe_sub(&mut r.x, &r.z, &r.y);
-    let ry = r.y;
-    fe_add(&mut r.y, &r.z, &ry);
-
-    fe_sub(&mut r.z, &t0, &r.t);
-    let rt = r.t;
-    fe_add(&mut r.t, &t0, &rt);
+    r.z = t0 - r.t;
+    r.t = t0 + r.t;
 }
 
-pub fn ge_tobytes(s: &mut [u8; 32], h: &GeP2) {
-    let mut recip: FE = [0; 10];
-    let mut x: FE = [0; 10];
-    let mut y: FE = [0; 10];
+pub fn ge_tobytes(output: &mut [u8; 32], h: &GeP2) {
+    let recip = h.z.invert();
+    let x = h.x * recip;
+    let y = h.y * recip;
 
-    fe_invert(&mut recip, &h.z);
-    fe_mul(&mut x, &h.x, &recip);
-    fe_mul(&mut y, &h.y, &recip);
-    fe_tobytes(s, &y);
+    *output = y.to_bytes();
 
-    let bit = if fe_isnegative(&x) == 1 { 1u8 } else { 0u8 };
-    s[31] ^= bit << 7;
+    let sign_bit = x.is_negative() as u8;
+    output[31] ^= sign_bit << 7;
 }

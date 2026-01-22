@@ -1,4 +1,4 @@
-use super::fe::{load_3, load_4};
+use super::field::{load_3, load_4};
 
 pub fn sc_reduce(s: &mut [u8]) {
     let mut s0 = 2097151 & load_3(&s[0..]) as i64;
