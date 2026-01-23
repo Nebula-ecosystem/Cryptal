@@ -1,5 +1,5 @@
 use super::field::FieldElement;
-use super::ge::GePrecomp;
+use super::group::GePrecomp;
 
 pub const BI: [GePrecomp; 8] = [
     GePrecomp {

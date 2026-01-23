@@ -1,9 +1,11 @@
 pub mod add_scalar;
+pub mod consttime;
 pub mod field;
-pub mod ge;
+pub mod group;
 pub mod key_exchange;
 pub mod keypair;
 pub mod precomp_data;
 pub mod sc;
+pub mod scalar;
 pub mod sign;
 pub mod verify;

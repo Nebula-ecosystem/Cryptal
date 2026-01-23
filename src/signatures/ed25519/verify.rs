@@ -1,9 +1,6 @@
-use crate::hash::sha512;
+use crate::{hash::sha512, signatures::ed25519::scalar::Scalar};
 
-use super::{
-    ge::{GeP2, GeP3, ge_double_scalarmult_vartime, ge_frombytes_negate_vartime, ge_tobytes},
-    sc::sc_reduce,
-};
+use super::{group::GeP3, sc::sc_reduce};
 
 #[inline(never)]
 pub fn consttime_equal(x: &[u8; 32], y: &[u8; 32]) -> bool {
@@ -16,16 +13,13 @@ pub fn consttime_equal(x: &[u8; 32], y: &[u8; 32]) -> bool {
 
 pub fn ed25519_verify(signature: &[u8; 64], message: &[u8], public_key: &[u8; 32]) -> bool {
     let mut h = [0u8; 64];
-    let mut checker = [0u8; 32];
-
-    let mut a = GeP3::default();
-    let mut r = GeP2::default();
 
     if (signature[63] & 224) != 0 {
         return false;
     }
 
-    if ge_frombytes_negate_vartime(&mut a, public_key) != 0 {
+    let (a, res) = GeP3::decompress(public_key);
+    if res != 0 {
         return false;
     }
 
@@ -39,11 +33,11 @@ pub fn ed25519_verify(signature: &[u8; 64], message: &[u8], public_key: &[u8; 32
 
     sc_reduce(&mut h);
 
-    let h_red: &[u8; 32] = (&h[..32]).try_into().unwrap();
-    let s: &[u8; 32] = (&signature[32..64]).try_into().unwrap();
+    let h_red = Scalar((h[..32]).try_into().unwrap());
+    let s = Scalar((signature[32..64]).try_into().unwrap());
 
-    ge_double_scalarmult_vartime(&mut r, h_red, &a, s);
-    ge_tobytes(&mut checker, &r);
+    let r = a.double_scalar_mul(h_red, s);
+    let checker = r.to_bytes();
 
     consttime_equal(&checker, (&signature[..32]).try_into().unwrap())
 }

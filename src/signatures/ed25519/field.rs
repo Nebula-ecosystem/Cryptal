@@ -1,6 +1,20 @@
 use std::array;
 use std::ops::{Add, Mul, Neg, Sub};
 
+pub(crate) const D: FieldElement = FieldElement([
+    -10913610, 13857413, -15372611, 6949391, 114729, -8787816, -6275908, -3247719, -18696448,
+    -12055116,
+]);
+
+pub(crate) const SQRTM1: FieldElement = FieldElement([
+    -32595792, -7943725, 9377950, 3500415, 12389472, -272473, -25146209, -2005654, 326686, 11406482,
+]);
+
+pub(crate) const D2: FieldElement = FieldElement([
+    -21827239, -5839606, -30745221, 13898782, 229458, 15978800, -12551817, -6495438, 29715968,
+    9444199,
+]);
+
 #[inline(always)]
 pub fn load_3(input: &[u8]) -> u64 {
     (input[0] as u64) | ((input[1] as u64) << 8) | ((input[2] as u64) << 16)
@@ -32,7 +46,7 @@ impl FieldElement {
         }
     }
 
-    pub(crate) fn mov(&mut self, rhs: &Self, condition: u32) {
+    pub(crate) fn conditional_move(&mut self, rhs: &Self, condition: u32) {
         let mask = -(condition as i32);
 
         for (s, r) in self.0.iter_mut().zip(rhs.0.iter()) {
