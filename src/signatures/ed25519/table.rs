@@ -1,6 +1,66 @@
 use super::field::FieldElement;
 use super::group::GePrecomp;
 
+/// Edwards curve constant `d` for Ed25519.
+///
+/// This constant defines the Edwards curve used by Ed25519:
+///
+/// ```text
+///     -x² + y² = 1 + d·x²·y²   (mod p)
+/// ```
+///
+/// where `p = 2²⁵⁵ − 19`.
+///
+/// The value is represented as a `FieldElement` using the same
+/// limb-based representation as the rest of the field arithmetic.
+/// It is used extensively in point addition, doubling, and
+/// coordinate conversions.
+pub(crate) const D: FieldElement = FieldElement([
+    -10913610, 13857413, -15372611, 6949391, 114729, -8787816, -6275908, -3247719, -18696448,
+    -12055116,
+]);
+
+/// Square root of `-1` modulo `p = 2²⁵⁵ − 19`.
+///
+/// This constant satisfies:
+///
+/// ```text
+///     SQRTM1² ≡ −1 (mod p)
+/// ```
+///
+/// It is required during point decompression on the Edwards curve,
+/// when computing square roots in the field and resolving the correct
+/// sign of the `x` coordinate.
+///
+/// This value is fixed for the Ed25519 field and matches the
+/// reference implementations.
+pub(crate) const SQRTM1: FieldElement = FieldElement([
+    -32595792, -7943725, 9377950, 3500415, 12389472, -272473, -25146209, -2005654, 326686, 11406482,
+]);
+
+/// Precomputed constant `2·d` for Ed25519.
+///
+/// This is simply `D + D` in the field, provided as a separate constant
+/// to avoid repeated doubling during arithmetic operations.
+///
+/// It is used in mixed-coordinate formulas and precomputation tables
+/// to reduce the number of field operations during point addition.
+pub(crate) const D2: FieldElement = FieldElement([
+    -21827239, -5839606, -30745221, 13898782, 229458, 15978800, -12551817, -6495438, 29715968,
+    9444199,
+]);
+
+/// Precomputed base-point multiples used for scalar multiplication.
+///
+/// `BI` contains a small table of precomputed `GePrecomp` values
+/// derived from the Ed25519 base point. These values are used in
+/// variable-time and mixed-coordinate scalar multiplication
+/// algorithms to significantly reduce the number of required
+/// additions and doublings.
+///
+/// The table layout and values follow the structure of the
+/// reference Ed25519 implementations and are tightly coupled
+/// to the chosen windowing strategy.
 pub const BI: [GePrecomp; 8] = [
     GePrecomp {
         yplusx: FieldElement([
@@ -116,6 +176,31 @@ pub const BI: [GePrecomp; 8] = [
     },
 ];
 
+/// Precomputed table of base point multiples for Ed25519.
+///
+/// `BASE` contains a fixed windowed precomputation of the Edwards25519
+/// base point `B`. It is organized as 32 rows of 8 elements, where each
+/// row corresponds to a 4-bit window of the scalar representation.
+///
+/// Conceptually, this table represents:
+///
+/// ```text
+/// BASE[i][j] = (2^(4·i)) · (j + 1) · B
+/// ```
+///
+/// for `i ∈ [0, 31]` and `j ∈ [0, 7]`.
+///
+/// This layout is used by scalar multiplication algorithms that
+/// decompose scalars into signed 4-bit digits (radix-16 representation).
+/// By selecting and conditionally negating precomputed points, the
+/// implementation avoids repeated point doubling and significantly
+/// reduces the overall cost of `scalar · B`.
+///
+/// All entries are stored in `GePrecomp` form (`y+x`, `y−x`, `xy·2d`)
+/// to enable fast mixed-coordinate additions without field inversions.
+///
+/// This table is fixed, curve-specific, and matches the values used by
+/// established Ed25519 reference implementations.
 pub static BASE: [[GePrecomp; 8]; 32] = [
     [
         GePrecomp {

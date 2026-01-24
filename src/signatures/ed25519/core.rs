@@ -2,7 +2,7 @@ use crate::{
     hash::sha512,
     rng::Csprng,
     signatures::ed25519::{
-        consttime::equal_u8_32,
+        ct::ConstantTimeEq,
         field::FieldElement,
         group::{GeCached, GeP1, GeP3},
     },
@@ -136,7 +136,7 @@ pub fn verify(signature: Signature, message: &[u8], public: PublicKey) -> bool {
     let r = a.double_scalar_mul(h_red, s);
     let checker = r.to_bytes();
 
-    equal_u8_32(&checker, (&signature.0[..32]).try_into().unwrap())
+    checker.ct_eq((&signature.0[..32]).try_into().unwrap())
 }
 
 pub fn add_scalar(
@@ -246,15 +246,15 @@ pub fn exchange(private: &PrivateKey, public: &PublicKey) -> [u8; 32] {
         z2 = x3 + z3;
         z3 = tmp0 * x2;
         z2 = z2 * tmp1;
-        tmp0 = tmp1.sq();
-        tmp1 = x2.sq();
+        tmp0 = tmp1.square();
+        tmp1 = x2.square();
         x3 = z3 + z2;
         z2 = z3 - z2;
         x2 = tmp1 * tmp0;
         tmp1 = tmp1 - tmp0;
-        z2 = z2.sq();
+        z2 = z2.square();
         z3 = tmp1.mul121666();
-        x3 = x3.sq();
+        x3 = x3.square();
         tmp0 = tmp0 + z3;
         z3 = x1 * z2;
         z2 = tmp1 * tmp0;

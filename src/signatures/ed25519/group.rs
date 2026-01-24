@@ -1,9 +1,8 @@
+use super::ct::ConstantTimeEq;
 use super::field::FieldElement;
-use super::precomp_data::BI;
-use crate::signatures::ed25519::consttime::{equal_i8, negative};
-use crate::signatures::ed25519::field::{D, D2, SQRTM1};
-use crate::signatures::ed25519::precomp_data::BASE;
-use crate::signatures::ed25519::scalar::Scalar;
+use super::scalar::Scalar;
+use super::table::BASE;
+use super::table::{BI, D, D2, SQRTM1};
 
 pub struct GeP1 {
     pub(crate) x: FieldElement,
@@ -114,15 +113,15 @@ impl GeP2 {
     }
 
     pub(crate) fn double(self) -> GeP1 {
-        let mut x = self.x.sq();
-        let mut z = self.y.sq();
-        let mut t = self.z.sq2();
+        let mut x = self.x.square();
+        let mut z = self.y.square();
+        let mut t = self.z.double_square();
         let mut y = self.x + self.y;
-        let ysq = y.sq();
+        let ysquare = y.square();
 
         y = z + x;
         z = z - x;
-        x = ysq - y;
+        x = ysquare - y;
         t = t - z;
 
         GeP1 { x, y, z, t }
@@ -260,22 +259,22 @@ impl GeP3 {
             t: FieldElement::ZERO,
         };
 
-        let mut u = h.y.sq();
+        let mut u = h.y.square();
         let mut v = u * D;
         u = u - h.z;
         v = v + h.z;
 
-        let v3 = v.sq();
+        let v3 = v.square();
         let v3 = v3 * v;
 
-        h.x = v3.sq();
+        h.x = v3.square();
         h.x = h.x * v;
         h.x = h.x * u;
         h.x = h.x.pow22523();
         h.x = h.x * v3;
         h.x = h.x * u;
 
-        let mut vxx = h.x.sq();
+        let mut vxx = h.x.square();
         vxx = vxx * v;
         let mut check = vxx - u;
 
@@ -401,17 +400,12 @@ impl GePrecomp {
         let mut minust = GePrecomp::ZERO;
         let mut t = GePrecomp::ONE;
 
-        let bnegative = negative(b);
+        let bnegative = b.ct_neg();
         let babs = (b as i16 - (((-(bnegative as i16)) & (b as i16)) << 1)) as i8;
 
-        t.conditional_move(&BASE[pos][0], equal_i8(babs, 1));
-        t.conditional_move(&BASE[pos][1], equal_i8(babs, 2));
-        t.conditional_move(&BASE[pos][2], equal_i8(babs, 3));
-        t.conditional_move(&BASE[pos][3], equal_i8(babs, 4));
-        t.conditional_move(&BASE[pos][4], equal_i8(babs, 5));
-        t.conditional_move(&BASE[pos][5], equal_i8(babs, 6));
-        t.conditional_move(&BASE[pos][6], equal_i8(babs, 7));
-        t.conditional_move(&BASE[pos][7], equal_i8(babs, 8));
+        for (i, base_elem) in BASE[pos].iter().enumerate() {
+            t.conditional_move(base_elem, babs.ct_eq(&((i + 1) as i8)) as u8);
+        }
 
         minust.yplusx = t.yminusx;
         minust.yminusx = t.yplusx;

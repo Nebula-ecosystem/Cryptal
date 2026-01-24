@@ -6,13 +6,26 @@
 //!
 //! Each submodule corresponds to a specific signature scheme and is
 //! responsible for its own key types, signing logic, and verification
-//! rules. The implementations are intentionally explicit and
-//! self-contained, favoring clarity and auditability over abstraction.
+//! rules. Implementations are intentionally explicit and self-contained,
+//! favoring clarity, auditability, and specification-level correctness
+//! over abstraction.
 //!
-//! This module does not expose shared high-level abstractions across
-//! signature schemes. Instead, each algorithm is implemented according
-//! to its specification, with minimal indirection.
+//! ## Ed25519
+//!
+//! The `ed25519` module is a **Rust reimplementation** inspired by the
+//! well-known reference implementation by Orson Peters:
+//!
+//! <https://github.com/orlp/ed25519>
+//!
+//! While rewritten from scratch in Rust, this implementation closely
+//! follows the original design and mathematical structure, including:
+//! - limb-based field arithmetic
+//! - explicit carry handling
+//! - constant-time operations
+//! - faithful adherence to the Ed25519 specification
+//!
+//! Any deviations from the original implementation are intentional and
+//! result from adapting the code to Rust’s type system, ownership model,
+//! and safety guarantees.
 
-mod ed25519;
-
-pub use ed25519::core as Ed25519;
+pub mod ed25519;
