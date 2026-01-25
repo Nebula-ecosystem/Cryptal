@@ -1,4 +1,4 @@
-use super::blake2b::{blake2b_512, blake2b_long};
+use crate::hash::{blake2b, blake2b_long};
 
 #[derive(Debug, Clone)]
 pub struct Block(pub [u64; 128]);
@@ -64,7 +64,7 @@ impl Block {
         input[24..28].copy_from_slice(&0x13u32.to_le_bytes());
         input[28..32].copy_from_slice(&counter.to_le_bytes());
 
-        let hash = blake2b_512(&input);
+        let hash = blake2b(64, &input);
         let mut block_input = [0u8; 1024];
         block_input[..64].copy_from_slice(&hash);
 

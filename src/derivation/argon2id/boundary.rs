@@ -1,6 +1,6 @@
-use super::blake2b::blake2b_512;
 use super::block::Block;
 use super::params::Argon2Params;
+use crate::hash::blake2b;
 
 pub(crate) fn init(
     password: &[u8],
@@ -28,7 +28,7 @@ pub(crate) fn init(
     buf.extend_from_slice(&0x13u32.to_le_bytes());
     buf.extend_from_slice(&2u32.to_le_bytes());
 
-    blake2b_512(&buf)
+    blake2b(64, &buf)
 }
 
 pub(crate) fn finalize(memory: &[Block], tag_len: usize) -> Vec<u8> {
@@ -38,7 +38,7 @@ pub(crate) fn finalize(memory: &[Block], tag_len: usize) -> Vec<u8> {
     }
 
     let bytes = final_block.to_bytes();
-    let final_hash = blake2b_512(&bytes);
+    let final_hash = blake2b(64, &bytes);
 
     final_hash[..tag_len].to_vec()
 }

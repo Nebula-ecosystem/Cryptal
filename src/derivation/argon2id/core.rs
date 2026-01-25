@@ -1,8 +1,8 @@
-use super::blake2b::blake2b_512;
 use super::block::Block;
 use super::boundary::{finalize, init};
 use super::memory::MemoryLayout;
 use super::params::{Argon2ParamError, Argon2Params};
+use crate::hash::blake2b;
 
 #[derive(Debug)]
 pub enum Argon2Error {
@@ -39,7 +39,7 @@ pub fn argon2id(
         let mut input = h0.clone();
         input.extend_from_slice(&i.to_le_bytes());
         let mut padded_hash = [0u8; 1024];
-        let hash = blake2b_512(&input);
+        let hash = blake2b(64, &input);
         padded_hash[..64].copy_from_slice(&hash);
         memory[layout.index(i, 0)] = Block::from_bytes(padded_hash);
     }
