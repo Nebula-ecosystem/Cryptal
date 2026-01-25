@@ -25,9 +25,11 @@
 - [x] **Secret Management**
   - [x] Shamir’s Secret Sharing (recovery, multi-device)
 
-- [ ] **Key Management**
+- [x] **Randomness**
   - [x] CSPRNG (secure randomness)
-  - [ ] Argon2id (password → key)
+
+-[ ]
+  - [ ] Argon2id (identity cost, human secret → strong key, password unlock, multi-device sync)
 
 ---
 
