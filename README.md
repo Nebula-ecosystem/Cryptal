@@ -29,6 +29,7 @@
   - [x] CSPRNG (secure randomness)
 
 -[ ] **Key Derivation & Unlocking** 
+  - [x] Argon2id-like (not RFC compliant)
   - [ ] Argon2id (identity cost, human secret → strong key, password unlock, multi-device sync)
 
 ---

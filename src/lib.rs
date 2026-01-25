@@ -18,8 +18,12 @@
 //!
 //! - `hash`  
 //!   Cryptographic hash functions and related utilities (e.g. SHA-256,
-//!   SHA-512). These implementations are intended for internal use and
-//!   protocol-level constructions.
+//!   SHA-512).
+//!
+//!   These hashes are **fast, deterministic, and CPU-bound**, and are intended
+//!   for integrity checking, identifiers, protocol-level constructions, and
+//!   internal hashing. They are **not** designed to protect low-entropy,
+//!   human-provided secrets.
 //!
 //! - `primitives`  
 //!   Fixed-size, low-level cryptographic primitives such as `U256` and
@@ -27,10 +31,12 @@
 //!   used as fundamental building blocks across the crate.
 //!
 //! - `rng`  
-//!   Cryptographically secure pseudorandom number generators built from
-//!   internal primitives. These generators may rely on the `utils` module
-//!   for initial entropy or environment interaction, while providing
-//!   deterministic and auditable randomness expansion.
+//!   Cryptographically secure pseudorandom number generators.
+//!
+//!   This module provides secure randomness expansion based on internal
+//!   primitives. It is used to generate keys, seeds, nonces, and other
+//!   high-entropy values. All secrets generated here are assumed to be
+//!   **machine-generated**, not human-derived.
 //!
 //! - `keys`  
 //!   Cryptographic key types and key-related operations.
@@ -44,6 +50,27 @@
 //!   No signing, verification, or protocol logic lives here—only key
 //!   structure and manipulation.
 //!
+//! - `derivation`  
+//!   Key derivation functions (KDFs).
+//!
+//!   This module contains algorithms designed to derive **strong,
+//!   cryptographic-quality keys** from inputs that are either low-entropy
+//!   (e.g. human passwords or passphrases) or require controlled,
+//!   parameterized transformation.
+//!
+//!   Unlike the `hash` module, derivation functions are intentionally
+//!   **slow and resource-intensive**, making them suitable for protecting
+//!   secrets against brute-force attacks.
+//!
+//!   The primary use case is **Argon2id**, which is used to:
+//!   - derive strong keys from human-provided secrets
+//!   - unlock encrypted key material locally
+//!   - reconstruct identities across multiple devices without storing keys
+//!   - optionally impose a one-time computational cost (e.g. anti-Sybil)
+//!
+//!   Derivation functions are **never used in network hot paths** and are
+//!   strictly local to the machine performing the derivation.
+//!
 //! - `recovery`  
 //!   Cryptographic recovery and survivability mechanisms.
 //!
@@ -54,27 +81,17 @@
 //!   multiple shares such that only a configurable threshold of shares is
 //!   required for reconstruction.
 //!
-//!   The Shamir implementation operates entirely over finite fields
-//!   (GF(256)), supports threshold-based reconstruction, and includes
-//!   share refresh functionality that renews shares without ever
-//!   reconstructing the underlying secret.
-//!
-//!   This module is intended for use cases such as:
-//!   - distributed key backup and recovery
-//!   - multi-party custody of cryptographic secrets
-//!   - long-term survivability of sensitive material
-//!   - protection against gradual share compromise
-//!
 //!   The recovery module is purely cryptographic: it does not perform any
 //!   storage, networking, or policy decisions. Those concerns are handled
 //!   at higher layers of the Nebula stack.
 //!
 //! # Design goals
 //!
+//! - Clear separation between hashing, key derivation, and key material
 //! - No heap allocations in core primitives
 //! - Minimal and explicit APIs
 //! - Stable, well-defined semantics
-//! - Clear separation between cryptographic code and supporting utilities
+//! - Cryptographic intent encoded in module structure
 //!
 //! This crate is not intended to replace full-featured, externally audited
 //! cryptographic libraries, but to serve as a small, controlled foundation
@@ -82,6 +99,7 @@
 
 mod utils;
 
+pub mod derivation;
 pub mod encryption;
 pub mod hash;
 pub mod keys;
